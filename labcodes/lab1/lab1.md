@@ -45,11 +45,40 @@
 bootblock有个三个依赖文件，分别是sign、bootasm.o和bootmain.o. 对应gcc代码如下：
 
 ```
-$ gcc -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc
-
+$ gcc -Iboot/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc -fno-stack-protector -Ilibs/ -Os -nostdinc -c boot/bootasm.S -o obj/boot/bootasm.o
 ```
 
+> `march`，指定进行优化的型号，此处是i686
+>
+> `fno-builtin`， 不使用c语言的内建函数（函数重名时使用）
+>
+> `fno-PIC`， 不生成与位置无关的代码(position independent code)
+>
+> `Wall`，编译后显示所有警告
+>
+> `ggdb`， 为GDB生成更为丰富的调试信息
+>
+> `gstabs`， 以stabs格式生成调试信息，但不包括上一条的GDB调试信息
+>
+> `nostdinc`，查找头文件时，不在标准系统目录下查找
 
+```
+$ ld -m elf_i386 -nostdlib -N -e start -Ttext 0x7C00 obj/boot/bootasm.o obj/boot/bootblock.o -o obj/bootblock.o
+```
+
+`@ld`：GNU的链接器，将目标文件链接为可执行文件
+
+> `m`，类march操作，模拟i386的链接器
+>
+> `nostdlib`，不使用标准库
+> 
+> `N`，设置全读写权限
+>
+> `e`，指定程序的入口符号
+>
+> `Ttext`，指定代码段的开始位置
+
+3. kernel的依赖文件是一个集合KOBJS，而文件具体内容由KSRCDIR指定
 
 ## 2 Exercise 2
 
