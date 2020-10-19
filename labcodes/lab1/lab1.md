@@ -413,3 +413,73 @@ ebp:0x00007bf8 eip:0x00007d74 args: 0xc031fcfa  0xc08ed88e  0x64e4d08e  0xfa7502
 ++ setup timer interrupts
 
 ```
+
+## Exercise 6
+
+> 2. 请编程完善kern/trap/trap.c中对中断向量表进行初始化的函数idt_init。在idt_init函数中， 依次对所有中断入口进行初始化。使用mmu.h中的SETGATE宏，填充idt数组内容。每个 中断的入口由tools/vectors.c生成，使用trap.c中声明的vectors数组即可。
+
+首先，SETGATE，
+
+第二个参数（读代码kern\mm\mmu.h。参数含义：是否为trap descriptor？我们是不涉及到特权切换，特权切换的部分会在challenge里实现，这里的都是interrupt-gate descriptor，肯定不是，填false）；
+
+第三个参数（读代码kern\mm\mmu.h。参数含义：代码段选择子。根据实验指导书，代码段选择子需要包括索引[15:3]、标指示位[2]、请求特权级[1:0]。观察一下memlayout.h里面的定义，我们应该选择KERNEL_CS。KERNEL_CS中包含了索引和权限，因为#define KERNEL_CS    ((GD_KTEXT) | DPL_KERNEL)）
+
+第四个参数（读代码kern\mm\mmu.h。参数含义：偏移量，不说了）
+
+第五个参数（读代码kern\mm\mmu.h。参数含义：权限等级描述，见memlayout.h宏定义，只有两种，核心权限DPL_KERNEL，用户权限DPL_USER，选DPL_KERNEL核心权限）
+
+然后，根据提示以及学堂在线讲解，要调用lidt(&idt_pd)告诉系统，我定义好中断向量表了！
+
+代码如下。
+
+```c
+void idt_init(void) {
+     /* LAB1 YOUR CODE : STEP 2 */
+     /* (1) Where are the entry addrs of each Interrupt Service Routine (ISR)?
+      *     All ISR's entry addrs are stored in __vectors. where is uintptr_t __vectors[] ?
+      *     __vectors[] is in kern/trap/vector.S which is produced by tools/vector.c
+      *     (try "make" command in lab1, then you will find vector.S in kern/trap DIR)
+      *     You can use  "extern uintptr_t __vectors[];" to define this extern variable which will be used later.
+      * (2) Now you should setup the entries of ISR in Interrupt Description Table (IDT).
+      *     Can you see idt[256] in this file? Yes, it's IDT! you can use SETGATE macro to setup each item of IDT
+      * (3) After setup the contents of IDT, you will let CPU know where is the IDT by using 'lidt' instruction.
+      *     You don't know the meaning of this instruction? just google it! and check the libs/x86.h to know more.
+      *     Notice: the argument of lidt is idt_pd. try to find it!
+      */
+    extern uintptr_t __vectors[];
+    for (int i = 0; i < 256; i++) {
+        SETGATE(idt[i], 0, KERNEL_CS, __vectors[i], DPL_KERNEL);
+    }
+    lidt(&idt_pd);
+}
+```
+
+> 3. 请编程完善trap.c中的中断处理函数trap，在对时钟中断进行处理的部分填写trap函数中 处理时钟中断的部分，使操作系统每遇到100次时钟中断后，调用print_ticks子程序，向 屏幕上打印一行文字”100 ticks”。
+
+根据提示编写就可以了！
+
+Too Simple? Yes, I think so!
+
+```c
+// code in kern/trap/trap.c/function:trap_dispatch
+		case IRQ_OFFSET + IRQ_TIMER:
+        /* LAB1 YOUR CODE : STEP 3 */
+        /* handle the timer interrupt */
+        /* (1) After a timer interrupt, you should record this event using a global variable (increase it), such as ticks in kern/driver/clock.c
+         * (2) Every TICK_NUM cycle, you can print some info using a funciton, such as print_ticks().
+         * (3) Too Simple? Yes, I think so!
+         */
+        ticks += 1;
+        if (!(ticks % TICK_NUM)) {
+            print_ticks();
+        }
+        break;
+```
+
+坑1：c语言里false不是关键字？学习了。改成0就成。
+
+![image-20201015205554856](C:\Users\78479\AppData\Roaming\Typora\typora-user-images\image-20201015205554856.png)
+
+成功截图：每100个tick就输出一下100ticks。可是我的输出频率明显比学堂在线的讲解视频快，可能是主频频率比较高（？）。然后输出的时候也可以捕获外设（键盘）的输入。也行。反正这部分也不是我自己写的。肯定能跑。
+
+![image-20201015205220958](C:\Users\78479\AppData\Roaming\Typora\typora-user-images\image-20201015205220958.png)
