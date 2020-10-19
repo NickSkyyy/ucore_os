@@ -484,4 +484,30 @@ Too Simple? Yes, I think so!
 ![image-20201015205220958](C:\Users\78479\AppData\Roaming\Typora\typora-user-images\image-20201015205220958.png)
 
 ## 6 Challenges
-相比之下，2更好设计。在KBD中断内设置对字符的检查，实现0-ring3，3-ring0的转换，并设置有当前
+坑1：Syntax error:")" unexpected ...
+
+![image-20201019221102201](C:\Users\78479\AppData\Roaming\Typora\typora-user-images\image-20201019221102201.png)
+
+原因是因为我是从windows下git clone然后再扔进ubuntu下的，导致了一些编码的问题。
+
+执行博客的如下操作：
+
+![image-20201019221223492](C:\Users\78479\AppData\Roaming\Typora\typora-user-images\image-20201019221223492.png)
+
+> 【1】ronmy，centos 行 2: $'\r': 未找到命令 在window 上编写的 sh
+> ，CSDN，2017，(https://blog.csdn.net/ronmy/article/details/68923419)
+
+成功解决，而且能跑出grade了。但是，再重启电脑之后。（同时还执行了上述代码之外的其他，但我忘了）
+
+![这里写图片描述](https://img-blog.csdn.net/20170818132338136?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbWxzODA1Mzc5OTcz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+无限memtest86，也找不到ubuntu内核了。无奈重装。淦。
+
+相比之下，2更好设计。在KBD中断内设置对字符的检查，实现0-ring3，3-ring0的转换，并设置有当前权限的检测。
+
+TOU/TOK两段代码实现汇编语言的软中断，三个冒号，1是输出，2是输入，3是不重要的东西。
+
++ 开头的sub的解释，“多popl”？
++ es和ss段加载在*_DS的解释？
+
+eflag在最初的时候并没有进行更新和设置，共有四个状态标志位。从高到低分别是：IOPL（特权标志），NT（嵌套任务标志），RF（重启动标志），VM（Virtual 8086 Mode if set 1）
