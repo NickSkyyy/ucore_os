@@ -303,3 +303,113 @@ $ ld -m elf_i386 -nostdlib -N -e start -Ttext 0x7C00 obj/boot/bootasm.o obj/boot
     ......
 
 ## 3 Exercise 4
+
+## 4 Exercise 5
+
+- 基本就是按照需要填写代码部分给出的逻辑提示进行编写。
+
+#### 填写后的代码块如下
+
+```C
+void print_stackframe(void) {
+     /* LAB1 YOUR CODE : STEP 1 */
+     /* (1) call read_ebp() to get the value of ebp. the type is (uint32_t);
+      * (2) call read_eip() to get the value of eip. the type is (uint32_t);
+      * (3) from 0 .. STACKFRAME_DEPTH
+      *    (3.1) printf value of ebp, eip
+      *    (3.2) (uint32_t)calling arguments [0..4] = the contents in address (uint32_t)ebp +2 [0..4]
+      *    (3.3) cprintf("\n");
+      *    (3.4) call print_debuginfo(eip-1) to print the C calling function name and line number, etc.
+      *    (3.5) popup a calling stackframe
+      *           NOTICE: the calling funciton's return addr eip  = ss:[ebp+4]
+      *                   the calling funciton's ebp = ss:[ebp]
+      */
+	uint32_t ebp = read_ebp(); //(1)
+    uint32_t eip = read_eip(); //(2)
+    for(int i=0;i<STACKFRAME_DEPTH && ebp!=0;i++){
+    	cprintf("ebp:0x%08x eip:0x%08x args:",ebp,eip); //(3.1) 
+    	uint32_t *calling_arguments = (uint32_t *) ebp; 
+    	for(int j=0;j<4;j++){
+    		cprintf(" 0x%08x ", calling_arguments[j]); //(3.2)
+		}
+		cprintf("\n"); //(3.3)
+		print_debuginfo(eip-1); //(3.4)
+    	eip = ((uint32_t *)ebp)[1]; 
+    	ebp = ((uint32_t *)ebp)[0]; //(3.5)
+	}
+}
+```
+
+- 这个exer想干什么？单纯的想实现栈帧信息打印。
+
+- 什么原理？ebp可以想象成是一个线性链表。ebp指向上层函数的基地址，跳跳跳跳到最后。
+
+- ebp和eip可以通过某个内联函数直接获取当前的ebp和eip。假设我们递归调用了一个函数，我们怎么从内层回溯到外层函数信息？利用函数调用时最后push进去的返回地址（ebp）。
+
+- 怎么利用？见下图。ss:[ebp+4]为返回地址，ss:[ebp+8]为传入的第一个参数（具体是什么意思？不知道，没有给出解释。参数为什么读4个？不知道，提示要求的。）
+
+- 参数到哪里？从地址ebp+8开始到ss:[ebp+4]读出的值（返回地址）
+
+  ![image-20201015154006190](C:\Users\78479\AppData\Roaming\Typora\typora-user-images\image-20201015154006190.png)
+
+一些可能不熟悉的点：
+
+1. %08x表示把输出的整数按照8位16进制格式（不包括‘0x’）输出，不足8位的部分用0填充。
+
+一些踩了的坑：
+
+1. 一开始使用的printf而不是printf，发现报错了，说没引入stdio.h，但其实引了，不知道为啥。
+
+2. 一开始循环判断没写ebp!=0，导致都到栈底了，还在打印，如下图。
+
+   ![image-20201015154653589](C:\Users\78479\AppData\Roaming\Typora\typora-user-images\image-20201015154653589.png)
+
+   正常的应该是下图。
+
+   ![image-20201015154753217](C:\Users\78479\AppData\Roaming\Typora\typora-user-images\image-20201015154753217.png)
+
+   
+
+```asm
+rexxar@rexxar-virtual-machine:~/ucore_os/labcodes/lab1$ make qemu
++ cc kern/debug/kdebug.c
++ ld bin/kernel
+记录了10000+0 的读入
+记录了10000+0 的写出
+5120000 bytes (5.1 MB, 4.9 MiB) copied, 0.092992 s, 55.1 MB/s
+记录了1+0 的读入
+记录了1+0 的写出
+512 bytes copied, 0.000121417 s, 4.2 MB/s
+记录了154+1 的读入
+记录了154+1 的写出
+78912 bytes (79 kB, 77 KiB) copied, 0.000961922 s, 82.0 MB/s
+WARNING: Image format was not specified for 'bin/ucore.img' and probing guessed raw.
+         Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.
+         Specify the 'raw' format explicitly to remove the restrictions.
+(THU.CST) os is loading ...
+
+Special kernel symbols:
+  entry  0x00100000 (phys)
+  etext  0x0010341d (phys)
+  edata  0x0010fa16 (phys)
+  end    0x00110d20 (phys)
+Kernel executable memory footprint: 68KB
+ebp:0x00007b28 eip:0x00100ab3 args: 0x00010094  0x00010094  0x00007b58  0x00100096 
+    kern/debug/kdebug.c:306: print_stackframe+25
+ebp:0x00007b38 eip:0x00100db5 args: 0x00000000  0x00000000  0x00000000  0x00007ba8 
+    kern/debug/kmonitor.c:125: mon_backtrace+14
+ebp:0x00007b58 eip:0x00100096 args: 0x00000000  0x00007b80  0xffff0000  0x00007b84 
+    kern/init/init.c:48: grade_backtrace2+37
+ebp:0x00007b78 eip:0x001000c4 args: 0x00000000  0xffff0000  0x00007ba4  0x00000029 
+    kern/init/init.c:53: grade_backtrace1+42
+ebp:0x00007b98 eip:0x001000e7 args: 0x00000000  0x00100000  0xffff0000  0x0000001d 
+    kern/init/init.c:58: grade_backtrace0+27
+ebp:0x00007bb8 eip:0x00100111 args: 0x0010343c  0x00103420  0x0000130a  0x00000000 
+    kern/init/init.c:63: grade_backtrace+38
+ebp:0x00007be8 eip:0x00100055 args: 0x00000000  0x00000000  0x00000000  0x00007c4f 
+    kern/init/init.c:28: kern_init+84
+ebp:0x00007bf8 eip:0x00007d74 args: 0xc031fcfa  0xc08ed88e  0x64e4d08e  0xfa7502a8 
+    <unknow>: -- 0x00007d73 --
+++ setup timer interrupts
+
+```
