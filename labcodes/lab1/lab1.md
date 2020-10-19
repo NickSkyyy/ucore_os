@@ -413,3 +413,6 @@ ebp:0x00007bf8 eip:0x00007d74 args: 0xc031fcfa  0xc08ed88e  0x64e4d08e  0xfa7502
 ++ setup timer interrupts
 
 ```
+
+## 6 Challenges
+相比之下，2更好设计。在KBD中断内设置对字符的检查，实现0-ring3，3-ring0的转换，并设置有当前
