@@ -105,7 +105,14 @@ sect函数细节：
 ### 3.2 ELF格式OS
 elf.h文件很详细
 
-va的减值在于此处可能会读取超过需求量，对offset内超过整数个SECTSIZE的内容进行边界的下调。由于kernel内容从1开始（0是bootblock），secno要进行+1
+seg函数细节：
++ va的减值在于此处可能会读取超过需求量，对offset内超过整数个SECTSIZE的内容进行边界的下调。如，考虑到program segment的bss存在等。（类似汇编的align对齐）
++ 由于kernel内容从1开始（0是bootblock），secno要进行+1
+
+整体流程：
++ 从HEADER的0处读取1页（8扇区）的内容，检查ELF文件合法性
++ 从program header位置读取所有的program segment
++ 进入HEADER指定的entry
 
 ## 4 Exercise 5
 - 基本就是按照需要填写代码部分给出的逻辑提示进行编写。
