@@ -27,7 +27,7 @@
 > `if=name`，input file 文件名
 >
 > `of=name`，output file 文件名
->+
+>
 > `count=num`，仅拷贝num个数的块
 >
 > `seek=num`，从输出文件开头跳过num个数的块后再开始复制
