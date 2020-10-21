@@ -25,3 +25,4 @@ compile_commands.json
 *.yml
 opensource_os_list.md
 resources.md
+*.el
