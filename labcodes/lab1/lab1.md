@@ -92,10 +92,20 @@ $ ld -m elf_i386 -nostdlib -N -e start -Ttext 0x7C00 obj/boot/bootasm.o obj/boot
 ## 3 Exercise 4
 结合exer1的Makefile流程具体解释取文件内容。
 ### 3.1 硬盘扇区
+逻辑区块地址(Logic Block Address,LBA)，
 
+sect函数细节：
++ 0x1F2 指定读取扇区数量，最小为1
++ 0x1F6处，第5位第7位一定为1，第6位指定模式，1为LBA，0为CHS；因此设置为0xE0
++ 0x20位数据读取命令
+> https://www.yiibai.com/unix_system_calls/insl.html#
+
+除4是用的字单位，1字=4字节
 
 ### 3.2 ELF格式OS
+elf.h文件很详细
 
+va的减值在于此处可能会读取超过需求量，对offset内超过整数个SECTSIZE的内容进行边界的下调。由于kernel内容从1开始（0是bootblock），secno要进行+1
 
 ## 4 Exercise 5
 - 基本就是按照需要填写代码部分给出的逻辑提示进行编写。
