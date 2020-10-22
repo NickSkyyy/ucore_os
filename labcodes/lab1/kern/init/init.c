@@ -104,7 +104,7 @@ lab1_switch_to_kernel(void) {
 	    : 
 	    : "i"(T_SWITCH_TOK)
 	);
-    //cprintf("to kernel finishe \n");
+    //cprintf("to kernel finish \n");
 }
 
 static void
