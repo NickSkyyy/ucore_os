@@ -203,6 +203,9 @@ trap_dispatch(struct trapframe *tf) {
         //cprintf("TOU tf \n");
         //print_trapframe(tf);x
         break;
+    case T_SWITCH_TOK:
+        lab1_my_to_kernel(tf);
+        break;
     case IRQ_OFFSET + IRQ_IDE1:
     case IRQ_OFFSET + IRQ_IDE2:
         /* do nothing */
