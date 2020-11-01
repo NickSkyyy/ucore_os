@@ -114,9 +114,9 @@ default_init_memmap(struct Page *base, size_t n) {
         set_page_ref(p, 0);
     }
     base->property = n;
-    SetPageProperty(base);
+    SetPageProperty(base); 
     nr_free += n;
-    list_add(&free_list, &(base->page_link));
+    list_add_before(&free_list, &(base->page_link));
 }
 
 static struct Page *
@@ -135,14 +135,16 @@ default_alloc_pages(size_t n) {
         }
     }
     if (page != NULL) {
-        list_del(&(page->page_link));
         if (page->property > n) {
             struct Page *p = page + n;
             p->property = page->property - n;
-            list_add(&free_list, &(p->page_link));
-    }
-        nr_free -= n;
+            SetPageProperty(p);
+            list_add(&(page->page_link), &(p->page_link));
+        }
         ClearPageProperty(page);
+        //SetPageReserved(page);?为什么注释掉这句话就可以了，但提示写的需要写这句话
+        list_del(&(page->page_link));
+        nr_free -= n;
     }
     return page;
 }
@@ -171,11 +173,23 @@ default_free_pages(struct Page *base, size_t n) {
             p->property += base->property;
             ClearPageProperty(base);
             base = p;
-            list_del(&(p->page_link));
+            list_del(&(p->page_link));//为什么不删除base->page_link?
         }
     }
     nr_free += n;
-    list_add(&free_list, &(base->page_link));
+    
+    //获取base开头的block插入list的位置
+    le = list_next(&free_list);
+    list_entry_t* bfle = list_prev(le);
+    while (le != &free_list) {
+        p = le2page(le, page_link);
+        if (base + base->property < le) {
+            break;
+        }
+        bfle = bfle->next;
+        le = le->next;
+    }
+    list_add(bfle, &(base->page_link));
 }
 
 static size_t
