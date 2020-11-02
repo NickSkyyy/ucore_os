@@ -1,10 +1,15 @@
 # os lab1
-
----
-
-> 姓名：董佳霖，戚晓睿，孙一丁
+> 成员1：1811349 董佳霖（主要负责2，3）
+> 
+> 成员2：1811412 戚晓睿（主要负责1，4）
+>
+> 成员3：1811425 孙一丁（主要负责5，6）
 >
 > 日期：2020.10.07
+>
+> Github: https://github.com/NickSkyyy/ucore_os/tree/lab1
+>
+> 备注：完成全部6个基本练习和2个附加练习，一起写的challenge
 
 ## 1 Exercise 1
 
@@ -80,226 +85,242 @@ $ ld -m elf_i386 -nostdlib -N -e start -Ttext 0x7C00 obj/boot/bootasm.o obj/boot
 
 3. kernel的依赖文件是一个集合KOBJS，而文件具体内容由KSRCDIR指定。内容基本同上。
 
++ 第一个块记录了bootblock，第二个块记录了kernel
+
 #### 1.2 主引导扇区
 
 从工具文件sign.c寻找对应的要求，以ucore.img为例。扇区总大小为512字节，obj/bootblock.out占据496字节，不得超过510字节。其中，510字节为0x55，511字节为0xAA.
 
-## 2 Exercise 2 & 3
-
-### ~/lab1  指令： make
-
-    \+ cc kern/init/init.c
-    kern/init/init.c:95:1: warning: ‘lab1_switch_test’ defined but not used [-Wunused-function]  
-    lab1_switch_test(void) {
-    ^
-    \+ cc kern/libs/stdio.c
-    \+ cc kern/libs/readline.c
-    \+ cc kern/debug/panic.c
-    kern/debug/panic.c: In function ‘__panic’:
-    kern/debug/panic.c:27:5: warning: implicit declaration of function 
-    ‘print_stackframe’ [-Wimplicit-function-declaration]
-        print_stackframe();
-        ^
-    \+ cc kern/debug/kdebug.c
-    kern/debug/kdebug.c:251:1: warning: ‘read_eip’ defined but not used [-Wunused-function]
-    read_eip(void) {
-    ^
-    \+ cc kern/debug/kmonitor.c
-    \+ cc kern/driver/clock.c
-    \+ cc kern/driver/console.c
-    \+ cc kern/driver/picirq.c
-    \+ cc kern/driver/intr.c
-    \+ cc kern/trap/trap.c
-    kern/trap/trap.c:14:13: warning: ‘print_ticks’ defined but not used [-Wunused-function]
-    static void print_ticks() {
-                ^
-    kern/trap/trap.c:30:26: warning: ‘idt_pd’ defined but not used [-Wunused-variable]
-    static struct pseudodesc idt_pd = {
-                            ^
-    \+ cc kern/trap/vectors.S
-    \+ cc kern/trap/trapentry.S
-    \+ cc kern/mm/pmm.c
-    \+ cc libs/string.c
-    \+ cc libs/printfmt.c
-    \+ ld bin/kernel
-    \+ cc boot/bootasm.S
-    \+ cc boot/bootmain.c
-    \+ cc tools/sign.c
-    \+ ld bin/bootblock
-    'obj/bootblock.out' size: 484 bytes
-    build 512 bytes boot sector: 'bin/bootblock' success!
-    10000+0 records in
-    10000+0 records out
-    5120000 bytes (5.1 MB, 4.9 MiB) copied, 0.21819 s, 23.5 MB/s
-    1+0 records in
-    1+0 records out
-    512 bytes copied, 0.000121855 s, 4.2 MB/s
-    146+1 records in
-    146+1 records out
-    74828 bytes (75 kB, 73 KiB) copied, 0.00337746 s, 22.2 MB/s
-
-### make "v=" 没有尝试
-
-
-### 进入gdb界面后（完全记录）
-
-    warning: A handler for the OS ABI "GNU/Linux" is not built into this configurati
-    on
-    of GDB.  Attempting to continue with the default i8086 settings.
-    
-    The target architecture is assumed to be i8086
-    0x0000fff0 in ?? ()
-    (gdb) x /2i 0xffff0
-    0xffff0:     ljmp   $0xf000,$0xe05b
-    0xffff5:     xor    %dh,0x322f
-     (gdb) x /10i 0xfe05b
-    0xfe05b:     cmpl   $0x0,%cs:0x6c48
-    0xfe062:     jne    0xfd2e1
-    0xfe066:     xor    %dx,%dx
-    0xfe068:     mov    %dx,%ss
-    0xfe06a:     mov    $0x7000,%esp
-    0xfe070:     mov    $0xf3691,%edx
-    0xfe076:     jmp    0xfd165
-    ---Type <return> to continue, or q <return> to quit---return
-    0xfe079:     push   %ebp
-    0xfe07b:     push   %edi
-    0xfe07d:     push   %esi
-    (gdb) si
-    0x0000e062 in ?? ()
-    (gdb) si
-    0x0000e066 in ?? ()
-    (gdb) si
-    0x0000e068 in ?? ()
-    (gdb) x /10i 0xfe068
-    0xfe068:     mov    %dx,%ss
-    0xfe06a:     mov    $0x7000,%esp
-    0xfe070:     mov    $0xf3691,%edx
-    0xfe076:     jmp    0xfd165
-    0xfe079:     push   %ebp
-    0xfe07b:     push   %edi
-    0xfe07d:     push   %esi
-    0xfe07f:     push   %ebx
-    0xfe081:     sub    $0x20,%esp
-    0xfe085:     mov    %eax,%ebx
-
-### 这里错误
-
-    (gdb) b 0xf7c00
-    No symbol table is loaded.  Use the "file" command.
-    Make breakpoint pending on future shared library load? (y or [n]) y
-    Breakpoint 1 (0xf7c00) pending.
-    (gdb) x /10i 0xf7c00
-    0xf7c00:     mov    %edx,0x10(%esp)
-    0xf7c06:     mov    %cl,0x16(%esp)
-    0xf7c0b:     movzbl 0x1c(%eax),%eax
-    0xf7c11:     mov    0x19(%ebx),%cl
-    0xf7c15:     mov    %cl,0x3(%esp)
-    0xf7c1a:     mov    0x18(%ebx),%cl
-    0xf7c1e:     mov    %cl,%dl
-    0xf7c20:     and    $0x3f,%edx
-    0xf7c24:     mov    %dl,0x1(%esp)
-    0xf7c29:     mov    0x15(%ebx),%dl
-
-## 这里错误
-
-错误点：前面要加\*而且地址是07c00而不是f7c00,。
-
-    (gdb) b *0x07c00
-    Breakpoint 1 at 0x7c00
-    (gdb) continue
-    Continuing.
-    Breakpoint 1, 0x00007c00 in ?? ()
-
-### 正确的从7c00开始调试：
-
-    Breakpoint 1, 0x00007c00 in ?? ()
-    (gdb) x /10i 0x07c00
-    => 0x7c00:      cli
-    0x7c01:      cld
-    0x7c02:      xor    %ax,%ax
-    0x7c04:      mov    %ax,%ds
-    0x7c06:      mov    %ax,%es
-    0x7c08:      mov    %ax,%ss
-    0x7c0a:      in     $0x64,%al
-    0x7c0c:      test   $0x2,%al
-    0x7c0e:      jne    0x7c0a
-    0x7c10:      mov    $0xd1,%al
-    0x00007c10 in ?? ()
-    (gdb) x /10i 0x7c10
-    => 0x7c10:      mov    $0xd1,%al
-    0x7c12:      out    %al,$0x64
-    0x7c14:      in     $0x64,%al
-    0x7c16:      test   $0x2,%al
-    0x7c18:      jne    0x7c14
-    0x7c1a:      mov    $0xdf,%al
-    0x7c1c:      out    %al,$0x60
-    0x7c1e:      lgdtw  0x7c6c
-    0x7c23:      mov    %cr0,%eax
-    0x7c26:      or     $0x1,%eax
-    (gdb) x /10i 0x07c26
-    => 0x7c26:      or     $0x1,%eax
-    0x7c2a:      mov    %eax,%cr0
-    0x7c2d:      ljmp   $0x8,$0x7c32
-    0x7c32:      mov    $0xd88e0010,%eax
-    0x7c38:      mov    %ax,%es
-    0x7c3a:      mov    %ax,%fs
-    0x7c3c:      mov    %ax,%gs
-    0x7c3e:      mov    %ax,%ss
-    0x7c40:      mov    $0x0,%bp
-    0x7c43:      add    %al,(%bx,%si)
-    (gdb) x /10i 0x07c45
-    => 0x7c45:      mov    $0x7c00,%sp
-    0x7c48:      add    %al,(%bx,%si)
-    0x7c4a:      call   0x7d07
-    0x7c4d:      add    %al,(%bx,%si)
-    0x7c4f:      jmp    0x7c4f
-    0x7c51:      lea    0x0(%bp),%si
-    0x7c54:      add    %al,(%bx,%si)
-    0x7c56:      add    %al,(%bx,%si)
-    0x7c58:      add    %al,(%bx,%si)
-    0x7c5a:      add    %al,(%bx,%si)
-    ......
-    (gdb) 
-
-### 单步调试 vs bootasm.S
-
-    0x7c01:      cld
-    0x7c02:      xor    %ax,%ax
-    0x7c04:      mov    %ax,%ds
-    0x7c06:      mov    %ax,%es
-    0x7c08:      mov    %ax,%ss
-    0x7c0a:      in     $0x64,%al
-    0x7c0c:      test   $0x2,%al
-    0x7c0e:      jne    0x7c0a
-    0x7c10:      mov    $0xd1,%al
-    0x7c12:      out    %al,$0x64
-    0x7c14:      in     $0x64,%al
-    0x7c16:      test   $0x2,%al
-    0x7c18:      jne    0x7c14
-    0x7c1a:      mov    $0xdf,%al
-    0x7c1c:      out    %al,$0x60
-    0x7c1e:      lgdtw  0x7c6c
-    0x7c23:      mov    %cr0,%eax
-    0x7c26:      or     $0x1,%eax
-    0x7c2a:      mov    %eax,%cr0
-    0x7c2d:      ljmp   $0x8,$0x7c32
-    0x7c32:      mov    $0xd88e0010,%eax
-    0x7c38:      mov    %ax,%es
-    0x7c3a:      mov    %ax,%fs
-    0x7c3c:      mov    %ax,%gs
-    0x7c3e:      mov    %ax,%ss
-    0x7c40:      mov    $0x0,%bp
-    0x7c43:      add    %al,(%bx,%si)
-    0x7c45:      mov    $0x7c00,%sp
-    0x7c48:      add    %al,(%bx,%si)
-    0x7c4a:      call   0x7d07
-    0x7c4d:      add    %al,(%bx,%si)
-    0x7c4f:      jmp    0x7c4f
-    0x7c51:      lea    0x0(%bp),%si
-    0x7c54:      add    %al,(%bx,%si)
-    0x7c56:      add    %al,(%bx,%si)
-    0x7c58:      add    %al,(%bx,%si)
-    0x7c5a:      add    %al,(%bx,%si)
-    ......
+## 2 Exercise 2&3
+详情见另一Markdown文件：labcodes/lab1/exe23实验过程记录.md
 
 ## 3 Exercise 4
+结合exer1的Makefile流程具体解释取文件内容。
+### 3.1 硬盘扇区
+逻辑区块地址(Logic Block Address,LBA)，
+
+sect函数细节：
++ 0x1F2 指定读取扇区数量，最小为1
++ 0x1F6处，第5位第7位一定为1，第6位指定模式，1为LBA，0为CHS；因此设置为0xE0
++ 0x20位数据读取命令
+> https://www.yiibai.com/unix_system_calls/insl.html#
+
+除4是用的字单位，1字=4字节
+
+### 3.2 ELF格式OS
+elf.h文件很详细
+
+seg函数细节：
++ va的减值在于此处可能会读取超过需求量，对offset内超过整数个SECTSIZE的内容进行边界的下调。如，考虑到program segment的bss存在等。（类似汇编的align对齐）
++ 由于kernel内容从1开始（0是bootblock），secno要进行+1
+
+整体流程：
++ 从HEADER的0处读取1页（8扇区）的内容，检查ELF文件合法性
++ 从program header位置读取所有的program segment
++ 进入HEADER指定的entry
+
+## 4 Exercise 5
+- 基本就是按照需要填写代码部分给出的逻辑提示进行编写。
+#### 填写后的代码块如下
+
+```C
+void print_stackframe(void) {
+     /* LAB1 YOUR CODE : STEP 1 */
+     /* (1) call read_ebp() to get the value of ebp. the type is (uint32_t);
+      * (2) call read_eip() to get the value of eip. the type is (uint32_t);
+      * (3) from 0 .. STACKFRAME_DEPTH
+      *    (3.1) printf value of ebp, eip
+      *    (3.2) (uint32_t)calling arguments [0..4] = the contents in address (uint32_t)ebp +2 [0..4]
+      *    (3.3) cprintf("\n");
+      *    (3.4) call print_debuginfo(eip-1) to print the C calling function name and line number, etc.
+      *    (3.5) popup a calling stackframe
+      *           NOTICE: the calling funciton's return addr eip  = ss:[ebp+4]
+      *                   the calling funciton's ebp = ss:[ebp]
+      */
+	uint32_t ebp = read_ebp(); //(1)
+    uint32_t eip = read_eip(); //(2)
+    for(int i=0;i<STACKFRAME_DEPTH && ebp!=0;i++){
+    	cprintf("ebp:0x%08x eip:0x%08x args:",ebp,eip); //(3.1) 
+    	uint32_t *calling_arguments = (uint32_t *) ebp; 
+    	for(int j=0;j<4;j++){
+    		cprintf(" 0x%08x ", calling_arguments[j]); //(3.2)
+		}
+		cprintf("\n"); //(3.3)
+		print_debuginfo(eip-1); //(3.4)
+    	eip = ((uint32_t *)ebp)[1]; 
+    	ebp = ((uint32_t *)ebp)[0]; //(3.5)
+	}
+}
+```
+
+- 这个exer想干什么？单纯的想实现栈帧信息打印。
+
+- 什么原理？ebp可以想象成是一个线性链表。ebp指向上层函数的基地址，跳跳跳跳到最后。
+
+- ebp和eip可以通过某个内联函数直接获取当前的ebp和eip。假设我们递归调用了一个函数，我们怎么从内层回溯到外层函数信息？利用函数调用时最后push进去的返回地址（ebp）。
+
+- 怎么利用？见下图。ss:[ebp+4]为返回地址，ss:[ebp+8]为传入的第一个参数（具体是什么意思？不知道，没有给出解释。参数为什么读4个？不知道，提示要求的。）
+
+- 参数到哪里？从地址ebp+8开始到ss:[ebp+4]读出的值（返回地址）
+
+  ![image-20201015154006190](C:\Users\78479\AppData\Roaming\Typora\typora-user-images\image-20201015154006190.png)
+
+一些可能不熟悉的点：
+
+1. %08x表示把输出的整数按照8位16进制格式（不包括‘0x’）输出，不足8位的部分用0填充。
+
+一些踩了的坑：
+
+1. 一开始使用的printf而不是printf，发现报错了，说没引入stdio.h，但其实引了，不知道为啥。
+
+2. 一开始循环判断没写ebp!=0，导致都到栈底了，还在打印，如下图。
+
+   ![image-20201015154653589](C:\Users\78479\AppData\Roaming\Typora\typora-user-images\image-20201015154653589.png)
+
+   正常的应该是下图。
+
+   ![image-20201015154753217](C:\Users\78479\AppData\Roaming\Typora\typora-user-images\image-20201015154753217.png)
+
+   
+
+```asm
+rexxar@rexxar-virtual-machine:~/ucore_os/labcodes/lab1$ make qemu
++ cc kern/debug/kdebug.c
++ ld bin/kernel
+记录了10000+0 的读入
+记录了10000+0 的写出
+5120000 bytes (5.1 MB, 4.9 MiB) copied, 0.092992 s, 55.1 MB/s
+记录了1+0 的读入
+记录了1+0 的写出
+512 bytes copied, 0.000121417 s, 4.2 MB/s
+记录了154+1 的读入
+记录了154+1 的写出
+78912 bytes (79 kB, 77 KiB) copied, 0.000961922 s, 82.0 MB/s
+WARNING: Image format was not specified for 'bin/ucore.img' and probing guessed raw.
+         Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.
+         Specify the 'raw' format explicitly to remove the restrictions.
+(THU.CST) os is loading ...
+
+Special kernel symbols:
+  entry  0x00100000 (phys)
+  etext  0x0010341d (phys)
+  edata  0x0010fa16 (phys)
+  end    0x00110d20 (phys)
+Kernel executable memory footprint: 68KB
+ebp:0x00007b28 eip:0x00100ab3 args: 0x00010094  0x00010094  0x00007b58  0x00100096 
+    kern/debug/kdebug.c:306: print_stackframe+25
+ebp:0x00007b38 eip:0x00100db5 args: 0x00000000  0x00000000  0x00000000  0x00007ba8 
+    kern/debug/kmonitor.c:125: mon_backtrace+14
+ebp:0x00007b58 eip:0x00100096 args: 0x00000000  0x00007b80  0xffff0000  0x00007b84 
+    kern/init/init.c:48: grade_backtrace2+37
+ebp:0x00007b78 eip:0x001000c4 args: 0x00000000  0xffff0000  0x00007ba4  0x00000029 
+    kern/init/init.c:53: grade_backtrace1+42
+ebp:0x00007b98 eip:0x001000e7 args: 0x00000000  0x00100000  0xffff0000  0x0000001d 
+    kern/init/init.c:58: grade_backtrace0+27
+ebp:0x00007bb8 eip:0x00100111 args: 0x0010343c  0x00103420  0x0000130a  0x00000000 
+    kern/init/init.c:63: grade_backtrace+38
+ebp:0x00007be8 eip:0x00100055 args: 0x00000000  0x00000000  0x00000000  0x00007c4f 
+    kern/init/init.c:28: kern_init+84
+ebp:0x00007bf8 eip:0x00007d74 args: 0xc031fcfa  0xc08ed88e  0x64e4d08e  0xfa7502a8 
+    <unknow>: -- 0x00007d73 --
+++ setup timer interrupts
+
+```
+## 5 Exercise 6
+
+> 2. 请编程完善kern/trap/trap.c中对中断向量表进行初始化的函数idt_init。在idt_init函数中， 依次对所有中断入口进行初始化。使用mmu.h中的SETGATE宏，填充idt数组内容。每个 中断的入口由tools/vectors.c生成，使用trap.c中声明的vectors数组即可。
+
+首先，SETGATE，
+
+第二个参数（读代码kern\mm\mmu.h。参数含义：是否为trap descriptor？我们是不涉及到特权切换，特权切换的部分会在challenge里实现，这里的都是interrupt-gate descriptor，肯定不是，填false）；
+
+第三个参数（读代码kern\mm\mmu.h。参数含义：代码段选择子。根据实验指导书，代码段选择子需要包括索引[15:3]、标指示位[2]、请求特权级[1:0]。观察一下memlayout.h里面的定义，我们应该选择KERNEL_CS。KERNEL_CS中包含了索引和权限，因为#define KERNEL_CS    ((GD_KTEXT) | DPL_KERNEL)）
+
+第四个参数（读代码kern\mm\mmu.h。参数含义：偏移量，不说了）
+
+第五个参数（读代码kern\mm\mmu.h。参数含义：权限等级描述，见memlayout.h宏定义，只有两种，核心权限DPL_KERNEL，用户权限DPL_USER，选DPL_KERNEL核心权限）
+
+然后，根据提示以及学堂在线讲解，要调用lidt(&idt_pd)告诉系统，我定义好中断向量表了！
+
+代码如下。
+
+```c
+void idt_init(void) {
+     /* LAB1 YOUR CODE : STEP 2 */
+     /* (1) Where are the entry addrs of each Interrupt Service Routine (ISR)?
+      *     All ISR's entry addrs are stored in __vectors. where is uintptr_t __vectors[] ?
+      *     __vectors[] is in kern/trap/vector.S which is produced by tools/vector.c
+      *     (try "make" command in lab1, then you will find vector.S in kern/trap DIR)
+      *     You can use  "extern uintptr_t __vectors[];" to define this extern variable which will be used later.
+      * (2) Now you should setup the entries of ISR in Interrupt Description Table (IDT).
+      *     Can you see idt[256] in this file? Yes, it's IDT! you can use SETGATE macro to setup each item of IDT
+      * (3) After setup the contents of IDT, you will let CPU know where is the IDT by using 'lidt' instruction.
+      *     You don't know the meaning of this instruction? just google it! and check the libs/x86.h to know more.
+      *     Notice: the argument of lidt is idt_pd. try to find it!
+      */
+    extern uintptr_t __vectors[];
+    for (int i = 0; i < 256; i++) {
+        SETGATE(idt[i], 0, KERNEL_CS, __vectors[i], DPL_KERNEL);
+    }
+    lidt(&idt_pd);
+}
+```
+
+> 3. 请编程完善trap.c中的中断处理函数trap，在对时钟中断进行处理的部分填写trap函数中 处理时钟中断的部分，使操作系统每遇到100次时钟中断后，调用print_ticks子程序，向 屏幕上打印一行文字”100 ticks”。
+
+根据提示编写就可以了！
+
+Too Simple? Yes, I think so!
+
+```c
+// code in kern/trap/trap.c/function:trap_dispatch
+		case IRQ_OFFSET + IRQ_TIMER:
+        /* LAB1 YOUR CODE : STEP 3 */
+        /* handle the timer interrupt */
+        /* (1) After a timer interrupt, you should record this event using a global variable (increase it), such as ticks in kern/driver/clock.c
+         * (2) Every TICK_NUM cycle, you can print some info using a funciton, such as print_ticks().
+         * (3) Too Simple? Yes, I think so!
+         */
+        ticks += 1;
+        if (!(ticks % TICK_NUM)) {
+            print_ticks();
+        }
+        break;
+```
+
+坑1：c语言里false不是关键字？学习了。改成0就成。
+
+![image-20201015205554856](C:\Users\78479\AppData\Roaming\Typora\typora-user-images\image-20201015205554856.png)
+
+成功截图：每100个tick就输出一下100ticks。可是我的输出频率明显比学堂在线的讲解视频快，可能是主频频率比较高（？）。然后输出的时候也可以捕获外设（键盘）的输入。也行。反正这部分也不是我自己写的。肯定能跑。
+
+![image-20201015205220958](C:\Users\78479\AppData\Roaming\Typora\typora-user-images\image-20201015205220958.png)
+
+## 6 Challenges
+坑1：Syntax error:")" unexpected ...
+
+![image-20201019221102201](C:\Users\78479\AppData\Roaming\Typora\typora-user-images\image-20201019221102201.png)
+
+原因是因为我是从windows下git clone然后再扔进ubuntu下的，导致了一些编码的问题。
+
+执行博客的如下操作：
+
+![image-20201019221223492](C:\Users\78479\AppData\Roaming\Typora\typora-user-images\image-20201019221223492.png)
+
+> 【1】ronmy，centos 行 2: $'\r': 未找到命令 在window 上编写的 sh
+> ，CSDN，2017，(https://blog.csdn.net/ronmy/article/details/68923419)
+
+成功解决，而且能跑出grade了。但是，再重启电脑之后。（同时还执行了上述代码之外的其他，但我忘了）
+
+![这里写图片描述](https://img-blog.csdn.net/20170818132338136?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbWxzODA1Mzc5OTcz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+无限memtest86，也找不到ubuntu内核了。无奈重装。淦。
+
+相比之下，2更好设计。在KBD中断内设置对字符的检查，实现0-ring3，3-ring0的转换，并设置有当前权限的检测。
+
+TOU/TOK两段代码实现汇编语言的软中断，三个冒号，1是输出，2是输入，3是不重要的东西。
+
++ 开头的sub的解释，“多popl”？
++ es和ss段加载在*_DS的解释？
+
+eflag在最初的时候并没有进行更新和设置，共有四个状态标志位。从高到低分别是：IOPL（特权标志），NT（嵌套任务标志），RF（重启动标志），VM（Virtual 8086 Mode if set 1）
