@@ -318,7 +318,7 @@ pmm_init(void) {
 }
 
 //get_pte - get pte and return the kernel virtual address of this pte for la
-//        - if the PT contians this pte didn't exist, alloc a page for PT
+//        - if the PT contains this pte didn't exist, alloc a page for PT
 // parameter:
 //  pgdir:  the kernel virtual base address of PDT
 //  la:     the linear address need to map
@@ -347,18 +347,22 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
      *   PTE_W           0x002                   // page table/directory entry flags bit : Writeable
      *   PTE_U           0x004                   // page table/directory entry flags bit : User can access
      */
-#if 0
-    pde_t *pdep = NULL;   // (1) find page directory entry
-    if (0) {              // (2) check if entry is not present
-                          // (3) check if creating is needed, then alloc page for page table
-                          // CAUTION: this page is used for page table, not for common data page
-                          // (4) set page reference
-        uintptr_t pa = 0; // (5) get linear address of page
-                          // (6) clear page content using memset
-                          // (7) set page directory entry's permission
+
+    pde_t *pdep = &(*(pgdir+PDX(la)));      // (1) find page directory entry
+    if (*pdep&&PTE_P==0) {                  // (2) check if entry is not present
+        struct Page* page;
+        if (create==1) {                       // (3) check if creating is needed, then alloc page for page table
+            page = alloc_pages(1);
+        }
+        else return NULL;
+                                            // CAUTION: this page is used for page table, not for common data page
+        set_page_ref(page, 1);              // (4) set page reference
+        uintptr_t pa = page2pa(page);       // (5) get linear address of page
+        memset(KADDR(pa), 0, sizeof(struct Page)); // (6) clear page content using memset
+        *pdep = pa | PTE_P | PTE_W | PTE_U; // (7) set page directory entry's permission
     }
-    return NULL;          // (8) return page table entry
-#endif
+    return &((pte_t*)(PTE_ADDR(*pdep)))[PTX(la)];                     // (8) return page table entry
+
 }
 
 //get_page - get related Page struct for linear address la using PDT pgdir
