@@ -116,7 +116,9 @@ default_init_memmap(struct Page *base, size_t n) {
     base->property = n;
     SetPageProperty(base); 
     nr_free += n;
-    list_add_before(&free_list, &(base->page_link));
+    /*DJL 为什么是before*/
+    list_add(&free_list, &(base->page_link));
+    //list_add_before(&free_list, &(base->page_link));
 }
 
 static struct Page *
@@ -142,7 +144,10 @@ default_alloc_pages(size_t n) {
             list_add(&(page->page_link), &(p->page_link));
         }
         ClearPageProperty(page);
-        //SetPageReserved(page);?Ϊʲôע�͵���仰�Ϳ����ˣ�����ʾд����Ҫд��仰
+        /* DJL 主要是针对有剩余容量的，存起来，接着用，否则直接拿走*/
+        /*DJL 所以这里是不是应该调整PG_reserved为1？？*/
+        //SetPageReserved(page);//?Ϊʲôע�͵���仰�Ϳ����ˣ�����ʾд����Ҫд��仰
+        ClearPageReserved(page);//DJL: 试试这样行不行
         list_del(&(page->page_link));
         nr_free -= n;
     }
@@ -164,6 +169,8 @@ default_free_pages(struct Page *base, size_t n) {
     while (le != &free_list) {
         p = le2page(le, page_link);
         le = list_next(le);
+        if (p + p->property < base) break;
+        if (base + base->property < p) continue;
         if (base + base->property == p) {
             base->property += p->property;
             ClearPageProperty(p);
@@ -173,12 +180,13 @@ default_free_pages(struct Page *base, size_t n) {
             p->property += base->property;
             ClearPageProperty(base);
             base = p;
-            list_del(&(p->page_link));//Ϊʲô��ɾ��base->page_link?
+            list_del(&(p->page_link));//Ϊʲô��ɾ��base->page_link?
         }
+        
     }
     nr_free += n;
     
-    //��ȡbase��ͷ��block����list��λ��
+    //��ȡbase��ͷ��block����list��λ��
     le = list_next(&free_list);
     list_entry_t* bfle = list_prev(le);
     while (le != &free_list) {

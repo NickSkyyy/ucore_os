@@ -348,8 +348,8 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
      *   PTE_U           0x004                   // page table/directory entry flags bit : User can access
      */
 
-    pde_t *pdep = &(*(pgdir+PDX(la)));      // (1) find page directory entry
-    if (*pdep&&PTE_P==0) {                  // (2) check if entry is not present
+    pde_t *pdep = pgdir+PDX(la);//&(*(pgdir+PDX(la)));      // (1) find page directory entry
+    if ((*pdep & PTE_P)==0) {    //DJL && -> &              // (2) check if entry is not present
         struct Page* page;
         if (create==1) {                       // (3) check if creating is needed, then alloc page for page table
             page = alloc_pages(1);
@@ -358,10 +358,13 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
                                             // CAUTION: this page is used for page table, not for common data page
         set_page_ref(page, 1);              // (4) set page reference
         uintptr_t pa = page2pa(page);       // (5) get linear address of page
+        //DJL KADDR 是 以KERNBASE为基地址进行rebase后的地址，位于0xC0000000位置
+        //DJL 或许可以通过改这个相关的去做exe3的挑战
         memset(KADDR(pa), 0, sizeof(struct Page)); // (6) clear page content using memset
         *pdep = pa | PTE_P | PTE_W | PTE_U; // (7) set page directory entry's permission
     }
-    return &((pte_t*)(PTE_ADDR(*pdep)))[PTX(la)];                     // (8) return page table entry
+    return &((pte_t *)KADDR(PDE_ADDR(*pdep)))[PTX(la)];   //DJL:  pdep is actually la， should return va
+                    // (8) return page table entry
 
 }
 
@@ -408,6 +411,21 @@ page_remove_pte(pde_t *pgdir, uintptr_t la, pte_t *ptep) {
                                   //(6) flush tlb
     }
 #endif
+    //pte_t *ptep = get_pte(pgdir, la, 0);
+    //cprintf("enter page_remove_pte\n");
+    if((*ptep) & PTE_P)              //(1) check if this page table entry is present
+    {
+        struct Page *page = pte2page(*ptep); //(2) find corresponding page to pte
+        page_ref_dec(page);                 //(3) decrease page reference
+        cprintf("%d\n", page_ref(page));
+        if (page_ref(page) == 0)            //(4) and free this page when page reference reachs 0
+        {
+            free_page(page);
+        }
+        *ptep = 0; //(5) clear second page table entry
+        tlb_invalidate(pgdir,la);           //(6) flush tlb
+    }
+    
 }
 
 //page_remove - free an Page which is related linear address la and has an validated pte
@@ -440,6 +458,7 @@ page_insert(pde_t *pgdir, struct Page *page, uintptr_t la, uint32_t perm) {
             page_ref_dec(page);
         }
         else {
+            cprintf("called page_remove_pte\n");
             page_remove_pte(pgdir, la, ptep);
         }
     }
@@ -488,8 +507,13 @@ check_pgdir(void) {
     assert(*ptep & PTE_W);
     assert(boot_pgdir[0] & PTE_U);
     assert(page_ref(p2) == 1);
-
+    /*DJL*/
+    cprintf("%d %d\n", page_ref(p1),page_ref(p2));
+    /*DJL */
     assert(page_insert(boot_pgdir, p1, PGSIZE, 0) == 0);
+     /*DJL*/
+    cprintf("%d %d\n", page_ref(p1),page_ref(p2));
+    /*DJL */
     assert(page_ref(p1) == 2);
     assert(page_ref(p2) == 0);
     assert((ptep = get_pte(boot_pgdir, PGSIZE, 0)) != NULL);
