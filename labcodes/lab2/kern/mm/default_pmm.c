@@ -144,10 +144,10 @@ default_alloc_pages(size_t n) {
             list_add(&(page->page_link), &(p->page_link));
         }
         ClearPageProperty(page);
-        /* DJL 主要是针对有剩余容量的，存起来，接着用，否则直接拿走*/
-        /*DJL 所以这里是不是应该调整PG_reserved为1？？*/
-        //SetPageReserved(page);//?Ϊʲôע�͵���仰�Ϳ����ˣ�����ʾд����Ҫд��仰
-        ClearPageReserved(page);//DJL: 试试这样行不行
+        /* DJL upper code written to deal with left over spaces*/
+        /*DJL set PG_reserved to 1？？*/
+        //SetPageReserved(page);//SYD: Has to delete this line or will crash
+        ClearPageReserved(page);//DJL: WORK BUT NOT SURE
         list_del(&(page->page_link));
         nr_free -= n;
     }

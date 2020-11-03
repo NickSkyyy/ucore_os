@@ -358,8 +358,8 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
                                             // CAUTION: this page is used for page table, not for common data page
         set_page_ref(page, 1);              // (4) set page reference
         uintptr_t pa = page2pa(page);       // (5) get linear address of page
-        //DJL KADDR 是 以KERNBASE为基地址进行rebase后的地址，位于0xC0000000位置
-        //DJL 或许可以通过改这个相关的去做exe3的挑战
+        //DJL KADDR is rebased with KERNBASE,locates from 0xC0000000
+        //DJL maybe is related to exe3's challenge
         memset(KADDR(pa), 0, sizeof(struct Page)); // (6) clear page content using memset
         *pdep = pa | PTE_P | PTE_W | PTE_U; // (7) set page directory entry's permission
     }
@@ -507,13 +507,8 @@ check_pgdir(void) {
     assert(*ptep & PTE_W);
     assert(boot_pgdir[0] & PTE_U);
     assert(page_ref(p2) == 1);
-    /*DJL*/
-    cprintf("%d %d\n", page_ref(p1),page_ref(p2));
-    /*DJL */
+    
     assert(page_insert(boot_pgdir, p1, PGSIZE, 0) == 0);
-     /*DJL*/
-    cprintf("%d %d\n", page_ref(p1),page_ref(p2));
-    /*DJL */
     assert(page_ref(p1) == 2);
     assert(page_ref(p2) == 0);
     assert((ptep = get_pte(boot_pgdir, PGSIZE, 0)) != NULL);
