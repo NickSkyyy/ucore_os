@@ -116,7 +116,9 @@ default_init_memmap(struct Page *base, size_t n) {
     base->property = n;
     SetPageProperty(base); 
     nr_free += n;
-    list_add_before(&free_list, &(base->page_link));
+    /*DJL 涓轰粈涔堟槸before*/
+    list_add(&free_list, &(base->page_link));
+    //list_add_before(&free_list, &(base->page_link));
 }
 
 static struct Page *
@@ -142,7 +144,10 @@ default_alloc_pages(size_t n) {
             list_add(&(page->page_link), &(p->page_link));
         }
         ClearPageProperty(page);
-        //SetPageReserved(page);?为什么注释掉这句话就可以了，但提示写的需要写这句话
+        /* DJL upper code written to deal with left over spaces*/
+        /*DJL set PG_reserved to 1锛燂紵*/
+        //SetPageReserved(page);//SYD: Has to delete this line or will crash
+        ClearPageReserved(page);//DJL: WORK BUT NOT SURE
         list_del(&(page->page_link));
         nr_free -= n;
     }
@@ -164,6 +169,8 @@ default_free_pages(struct Page *base, size_t n) {
     while (le != &free_list) {
         p = le2page(le, page_link);
         le = list_next(le);
+        if (p + p->property < base) break;
+        if (base + base->property < p) continue;
         if (base + base->property == p) {
             base->property += p->property;
             ClearPageProperty(p);
@@ -173,12 +180,13 @@ default_free_pages(struct Page *base, size_t n) {
             p->property += base->property;
             ClearPageProperty(base);
             base = p;
-            list_del(&(p->page_link));//为什么不删除base->page_link?
+            list_del(&(p->page_link));//为什么锟斤拷删锟斤拷base->page_link?
         }
+        
     }
     nr_free += n;
     
-    //获取base开头的block插入list的位置
+    //锟斤拷取base锟斤拷头锟斤拷block锟斤拷锟斤拷list锟斤拷位锟斤拷
     le = list_next(&free_list);
     list_entry_t* bfle = list_prev(le);
     while (le != &free_list) {
