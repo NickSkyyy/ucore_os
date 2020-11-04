@@ -136,19 +136,24 @@ default_alloc_pages(size_t n) {
             break;
         }
     }
+    // 4.1.2
     if (page != NULL) {
+        // 4.1.2.1
         if (page->property > n) {
             struct Page *p = page + n;
             p->property = page->property - n;
             SetPageProperty(p);
             list_add(&(page->page_link), &(p->page_link));
         }
-        ClearPageProperty(page);
         /* DJL upper code written to deal with left over spaces*/
         /*DJL set PG_reserved to 1？？*/
-        //SetPageReserved(page);//SYD: Has to delete this line or will crash
-        ClearPageReserved(page);//DJL: WORK BUT NOT SURE
+        SetPageReserved(page);//SYD: Has to delete this line or will crash
+        //ClearPageReserved(page);//DJL: WORK BUT NOT SURE
+        // 4.1.2 (PG_property to 0)
+        ClearPageProperty(page);
+        // 4.1.2 (page unlink)
         list_del(&(page->page_link));
+        // 4.1.3
         nr_free -= n;
     }
     return page;
@@ -180,13 +185,12 @@ default_free_pages(struct Page *base, size_t n) {
             p->property += base->property;
             ClearPageProperty(base);
             base = p;
-            list_del(&(p->page_link));//Ϊʲô��ɾ��base->page_link?
-        }
-        
+            list_del(&(p->page_link));
+        }     
     }
     nr_free += n;
     
-    //��ȡbase��ͷ��block����list��λ��
+    // right order in list
     le = list_next(&free_list);
     list_entry_t* bfle = list_prev(le);
     while (le != &free_list) {
@@ -231,6 +235,7 @@ basic_check(void) {
 
     free_page(p0);
     free_page(p1);
+
     free_page(p2);
     assert(nr_free == 3);
 
