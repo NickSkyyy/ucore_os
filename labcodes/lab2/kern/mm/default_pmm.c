@@ -117,8 +117,8 @@ default_init_memmap(struct Page *base, size_t n) {
     SetPageProperty(base); 
     nr_free += n;
     /*DJL 为什么是before*/
-    list_add(&free_list, &(base->page_link));
-    //list_add_before(&free_list, &(base->page_link));
+    //list_add(&free_list, &(base->page_link));
+    list_add_before(&free_list, &(base->page_link));
 }
 
 static struct Page *
@@ -147,7 +147,7 @@ default_alloc_pages(size_t n) {
         }
         /* DJL upper code written to deal with left over spaces*/
         /*DJL set PG_reserved to 1？？*/
-        SetPageReserved(page);//SYD: Has to delete this line or will crash
+        //SetPageReserved(page);//SYD: Has to delete this line or will crash
         //ClearPageReserved(page);//DJL: WORK BUT NOT SURE
         // 4.1.2 (PG_property to 0)
         ClearPageProperty(page);
