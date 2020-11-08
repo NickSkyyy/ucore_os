@@ -139,6 +139,7 @@ default_alloc_pages(size_t n) {
     // 4.1.2
     if (page != NULL) {
         // 4.1.2.1
+        SetPageReserved(page);
         if (page->property > n) {
             struct Page *p = page + n;
             p->property = page->property - n;
@@ -147,8 +148,8 @@ default_alloc_pages(size_t n) {
         }
         /* DJL upper code written to deal with left over spaces*/
         /*DJL set PG_reserved to 1？？*/
-        SetPageReserved(page);//SYD: Has to delete this line or will crash
-        //ClearPageReserved(page);//DJL: WORK BUT NOT SURE
+        //SetPageReserved(page);//SYD: Has to delete this line or will crash
+        ClearPageReserved(page);//DJL: WORK BUT NOT SURE
         // 4.1.2 (PG_property to 0)
         ClearPageProperty(page);
         // 4.1.2 (page unlink)
