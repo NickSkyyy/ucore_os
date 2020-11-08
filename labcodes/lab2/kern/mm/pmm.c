@@ -363,9 +363,9 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
         memset(KADDR(pa), 0, sizeof(struct Page)); // (6) clear page content using memset
         *pdep = pa | PTE_P | PTE_W | PTE_U; // (7) set page directory entry's permission
     }
-    return &((pte_t *)KADDR(PDE_ADDR(*pdep)))[PTX(la)];   //DJL:  pdep is actually la， should return va
+    return (pte_t*)KADDR((PDE_ADDR(*pdep)))+PTX(la); //SYD: maybe more easily to understand
+    //return &((pte_t *)KADDR(PDE_ADDR(*pdep)))[PTX(la)];   //DJL:  pdep is actually la， should return va
                     // (8) return page table entry
-
 }
 
 //get_page - get related Page struct for linear address la using PDT pgdir
@@ -413,17 +413,17 @@ page_remove_pte(pde_t *pgdir, uintptr_t la, pte_t *ptep) {
 #endif
     //pte_t *ptep = get_pte(pgdir, la, 0);
     //cprintf("enter page_remove_pte\n");
-    if((*ptep) & PTE_P)              //(1) check if this page table entry is present
+    if((*ptep) & PTE_P)                         //(1) check if this page table entry is present
     {
-        struct Page *page = pte2page(*ptep); //(2) find corresponding page to pte
-        page_ref_dec(page);                 //(3) decrease page reference
+        struct Page *page = pte2page(*ptep);    //(2) find corresponding page to pte
+        page_ref_dec(page);                     //(3) decrease page reference
         cprintf("%d\n", page_ref(page));
-        if (page_ref(page) == 0)            //(4) and free this page when page reference reachs 0
+        if (page_ref(page) == 0)                //(4) and free this page when page reference reachs 0
         {
             free_page(page);
         }
-        *ptep = 0; //(5) clear second page table entry
-        tlb_invalidate(pgdir,la);           //(6) flush tlb
+        *ptep = 0;                              //(5) clear second page table entry
+        tlb_invalidate(pgdir,la);               //(6) flush tlb
     }
     
 }
