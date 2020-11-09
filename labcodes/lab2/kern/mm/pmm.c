@@ -5,7 +5,10 @@
 #include <mmu.h>
 #include <memlayout.h>
 #include <pmm.h>
-#include <default_pmm.h>
+// qxr: change begin
+//#include <default_pmm.h>
+#include <buddy_system.h>
+// qxr: change end
 #include <sync.h>
 #include <error.h>
 
@@ -44,6 +47,7 @@ uintptr_t boot_cr3;
 
 // physical memory management
 const struct pmm_manager *pmm_manager;
+
 
 /* *
  * The page directory entry corresponding to the virtual address range
@@ -137,7 +141,10 @@ gdt_init(void) {
 //init_pmm_manager - initialize a pmm_manager instance
 static void
 init_pmm_manager(void) {
-    pmm_manager = &default_pmm_manager;
+    // qxr: change begin
+    //pmm_manager = &default_pmm_manager;
+    pmm_manager = &buddy_system;
+    // qxr: change end
     cprintf("memory management: %s\n", pmm_manager->name);
     pmm_manager->init();
 }
