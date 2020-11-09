@@ -149,7 +149,7 @@ default_alloc_pages(size_t n) {
         /* DJL upper code written to deal with left over spaces*/
         /*DJL set PG_reserved to 1？？*/
         //SetPageReserved(page);//SYD: Has to delete this line or will crash
-        //ClearPageReserved(page);//DJL: WORK BUT NOT SURE
+        ClearPageReserved(page);//DJL: WORK BUT NOT SURE
         // 4.1.2 (PG_property to 0)
         ClearPageProperty(page);
         // 4.1.2 (page unlink)
