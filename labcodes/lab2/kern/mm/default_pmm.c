@@ -6,7 +6,7 @@
 /*  In the First Fit algorithm, the allocator keeps a list of free blocks
  * (known as the free list). Once receiving a allocation request for memory,
  * it scans along the list for the first block that is large enough to satisfy
- * the request. If the chosen block is significantly larger than requested, it
+ * the request. If the chosen block    bds_selfcheck(); is significantly larger than requested, it
  * is usually splitted, and the remainder will be added into the list as
  * another free block.
  *  Please refer to Page 196~198, Section 8.2 of Yan Wei Min's Chinese book
@@ -113,12 +113,16 @@ default_init_memmap(struct Page *base, size_t n) {
         p->flags = p->property = 0;
         set_page_ref(p, 0);
     }
+    //cprintf("base addr is: %llx\n", base->page_link);
+    //cprintf("p addr is: %llx\n", p->page_link);
     base->property = n;
     SetPageProperty(base); 
     nr_free += n;
     /*DJL 为什么是before*/
     //list_add(&free_list, &(base->page_link));
     list_add_before(&free_list, &(base->page_link));
+    //cprintf("base addr is: %llx\n", base->page_link);
+    //cprintf("p addr is: %llx\n", p->page_link);
 }
 
 static struct Page *

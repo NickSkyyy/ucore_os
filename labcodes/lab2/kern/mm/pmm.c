@@ -6,8 +6,9 @@
 #include <memlayout.h>
 #include <pmm.h>
 // qxr: change begin
-//#include <default_pmm.h>
+#include <default_pmm.h>
 #include <buddy_system.h>
+#include <buddysys_pmm.h>
 // qxr: change end
 #include <sync.h>
 #include <error.h>
@@ -144,6 +145,7 @@ init_pmm_manager(void) {
     // qxr: change begin
     //pmm_manager = &default_pmm_manager;
     pmm_manager = &buddy_system;
+    //pmm_manager = &buddysys_pmm_manager;
     // qxr: change end
     cprintf("memory management: %s\n", pmm_manager->name);
     pmm_manager->init();
@@ -239,7 +241,8 @@ page_init(void) {
                 begin = ROUNDUP(begin, PGSIZE);
                 end = ROUNDDOWN(end, PGSIZE);
                 if (begin < end) {
-                    //cprintf("size is: %08llx\n", end - begin) / PGSIZE);
+                    cprintf("begin addr is: %llx\n", begin);
+                    cprintf("size is: %llx\n", (end - begin) / PGSIZE);
                     init_memmap(pa2page(begin), (end - begin) / PGSIZE);
                 }
             }
