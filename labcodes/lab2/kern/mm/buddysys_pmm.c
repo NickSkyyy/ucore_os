@@ -258,32 +258,32 @@ buddysys_check(void) {
     cprintf("p0 %p\n",p0);
     assert(p0 == A);
 
-    cprintf("allocate 70 pages to A, 35 pages to B, A+128 shall equal to B!\n");
-    A=alloc_pages(70); 
-    B=alloc_pages(35);
-    assert(A+128==B);//检查是否相邻
-    //  ===70(128)A===|==35(64)B==|===64FREE===|=====================FREE=================
-    cprintf("A %p\n",A);
-    cprintf("B %p\n",B);
+    // cprintf("allocate 70 pages to A, 35 pages to B, A+128 shall equal to B!\n");
+    // A=alloc_pages(70); 
+    // B=alloc_pages(35);
+    // assert(A+128==B);//检查是否相邻
+    // //  ===70(128)A===|==35(64)B==|===64FREE===|=====================FREE=================
+    // cprintf("A %p\n",A);
+    // cprintf("B %p\n",B);
 
-    cprintf("allocate 80 pages to C, A+256 shall equal to C!\n");
-    C=alloc_pages(80);
-    assert(A+256==C);//检查C有没有和A重叠
-    //  ===70(128)A===|==35(64)B==|===64FREE===|=========80(128)C==========|=========free==========
-    cprintf("C %p\n",C);
-    free_pages(A,70);//释放A
-    //  =====FREE=====|==35(64)B==|===64FREE===|=========80(128)C==========|=========free==========
-    cprintf("B %p\n",B);
-    D=alloc_pages(60);
-    //  =====FREE=====|==35(64)B==|===60(64)D==|=========80(128)C==========|=========free==========
-    cprintf("D %p\n",D);
-    assert(B+64==D);//检查B，D是否相邻
-    free_pages(B,35);
-    cprintf("D %p\n",D);
-    free_pages(D,60);
-    cprintf("C %p\n",C);
-    free_pages(C,80);
-    //  =====FREE=====|====FREE===|====FREE====|=========FREE==========|=========free==========
+    // cprintf("allocate 80 pages to C, A+256 shall equal to C!\n");
+    // C=alloc_pages(80);
+    // assert(A+256==C);//检查C有没有和A重叠
+    // //  ===70(128)A===|==35(64)B==|===64FREE===|=========80(128)C==========|=========free==========
+    // cprintf("C %p\n",C);
+    // free_pages(A,70);//释放A
+    // //  =====FREE=====|==35(64)B==|===64FREE===|=========80(128)C==========|=========free==========
+    // cprintf("B %p\n",B);
+    // D=alloc_pages(60);
+    // //  =====FREE=====|==35(64)B==|===60(64)D==|=========80(128)C==========|=========free==========
+    // cprintf("D %p\n",D);
+    // assert(B+64==D);//检查B，D是否相邻
+    // free_pages(B,35);
+    // cprintf("D %p\n",D);
+    // free_pages(D,60);
+    // cprintf("C %p\n",C);
+    // free_pages(C,80);
+    // //  =====FREE=====|====FREE===|====FREE====|=========FREE==========|=========free==========
     free_pages(p0,1000);//全部释放
     //  ========================================FREE===========================================
 }

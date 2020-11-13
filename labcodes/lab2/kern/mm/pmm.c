@@ -143,9 +143,9 @@ gdt_init(void) {
 static void
 init_pmm_manager(void) {
     // qxr: change begin
-    pmm_manager = &default_pmm_manager;
+    //pmm_manager = &default_pmm_manager;
     //pmm_manager = &buddy_system;
-    //pmm_manager = &buddysys_pmm_manager;
+    pmm_manager = &buddysys_pmm_manager;
     // qxr: change end
     cprintf("memory management: %s\n", pmm_manager->name);
     pmm_manager->init();
