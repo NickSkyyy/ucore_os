@@ -308,7 +308,7 @@ print_stackframe(void) {
     	cprintf("ebp:0x%08x eip:0x%08x args:",ebp,eip);
     	uint32_t *calling_arguments = (uint32_t *) ebp + 2;
     	for(int j=0;j<4;j++)
-    		cprintf(" 0x%08x ", calling_arguments[j]);		
+    		cprintf(" 0x%08x ", calling_arguments[j]);
         cprintf("\n");
 		print_debuginfo(eip-1);
     	eip = ((uint32_t *)ebp)[1];

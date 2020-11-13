@@ -26,3 +26,5 @@ compile_commands.json
 opensource_os_list.md
 resources.md
 *.el
+.vs
+lab*.pdf
