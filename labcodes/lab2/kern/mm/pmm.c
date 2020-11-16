@@ -144,8 +144,8 @@ static void
 init_pmm_manager(void) {
     // qxr: change begin
     //pmm_manager = &default_pmm_manager;
-    pmm_manager = &buddy_system;
-    //pmm_manager = &buddysys_pmm_manager;
+    //pmm_manager = &buddy_system;
+    pmm_manager = &buddysys_pmm_manager;
     // qxr: change end
     cprintf("memory management: %s\n", pmm_manager->name);
     pmm_manager->init();
@@ -216,10 +216,13 @@ page_init(void) {
     if (maxpa > KMEMSIZE) {
         maxpa = KMEMSIZE;
     }
-
+    //cprintf("KMEMSIZE is: %llx\n", KMEMSIZE);
+    //cprintf("MAXPA is: %llx\n", maxpa);
     extern char end[];
 
     npage = maxpa / PGSIZE;
+    //cprintf("pages start is: %llx\n", pages);
+    //cprintf("page_link start is: %llx\n", pages->page_link);
     pages = (struct Page *)ROUNDUP((void *)end, PGSIZE);
 
     for (i = 0; i < npage; i ++) {
@@ -241,8 +244,8 @@ page_init(void) {
                 begin = ROUNDUP(begin, PGSIZE);
                 end = ROUNDDOWN(end, PGSIZE);
                 if (begin < end) {
-                    cprintf("begin addr is: %llx\n", begin);
-                    cprintf("size is: %llx\n", (end - begin) / PGSIZE);
+                    //cprintf("begin addr is: %llx\n", begin);
+                    //cprintf("size is: %llx\n", (end - begin) / PGSIZE);
                     init_memmap(pa2page(begin), (end - begin) / PGSIZE);
                 }
             }
