@@ -7,8 +7,8 @@
 #include <pmm.h>
 // qxr: change begin
 #include <default_pmm.h>
-#include <buddy_system.h>
-#include <buddysys_pmm.h>
+//#include <buddy_system.h>
+//#include <buddysys_pmm.h>
 // qxr: change end
 #include <sync.h>
 #include <error.h>
