@@ -38,7 +38,7 @@ kern_init(void) {
 
     //LAB1: CAHLLENGE 1 If you try to do it, uncomment lab1_switch_test()
     // user/kernel mode switch test
-    //lab1_switch_test();
+    lab1_switch_test();
 
     /* do nothing */
     while (1);
@@ -85,11 +85,27 @@ lab1_print_cur_status(void) {
 static void
 lab1_switch_to_user(void) {
     //LAB1 CHALLENGE 1 : TODO
+    asm volatile(
+        "sub $0x8, %%esp;"
+        "int %0;"
+        "movl %%ebp, %%esp;"
+        :
+    : "i"(T_SWITCH_TOU)
+        );
+    //cprintf("to user finish \n");
 }
 
 static void
 lab1_switch_to_kernel(void) {
     //LAB1 CHALLENGE 1 :  TODO
+    asm volatile (
+        "sub $0x8, %%esp;"
+        "int %0;"
+        "movl %%ebp, %%esp;"
+        :
+    : "i"(T_SWITCH_TOK)
+        );
+    //cprintf("to kernel finishe \n");
 }
 
 static void

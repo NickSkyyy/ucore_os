@@ -48,6 +48,13 @@ idt_init(void) {
       *     You don't know the meaning of this instruction? just google it! and check the libs/x86.h to know more.
       *     Notice: the argument of lidt is idt_pd. try to find it!
       */
+    extern uintptr_t __vectors[];
+    for (int i = 0; i < 256; i++) {
+        SETGATE(idt[i], 0, KERNEL_CS, __vectors[i], DPL_KERNEL);
+    }
+    SETGATE(idt[T_SWITCH_TOK], 1, KERNEL_CS, __vectors[T_SWITCH_TOK], DPL_USER);
+    SETGATE(idt[T_SWITCH_TOU], 1, KERNEL_CS, __vectors[T_SWITCH_TOU], DPL_KERNEL);
+    lidt(&idt_pd);
 }
 
 static const char *
@@ -124,6 +131,26 @@ print_trapframe(struct trapframe *tf) {
     }
 }
 
+/* lab1实现的两个切换函数 */
+static int
+lab1_my_to_kernel(struct trapframe* tf) {
+    //cprintf("in kernel \n");
+    tf->tf_cs = KERNEL_CS;
+    tf->tf_ds = KERNEL_DS;
+    tf->tf_es = KERNEL_DS;
+    tf->tf_ss = KERNEL_DS;
+    tf->tf_eflags &= 0x0fff;
+}
+static int
+lab1_my_to_user(struct trapframe* tf) {
+    //cprintf("in user \n");
+    tf->tf_cs = USER_CS;
+    tf->tf_ds = USER_DS;
+    tf->tf_es = USER_DS;
+    tf->tf_ss = USER_DS;
+    tf->tf_eflags |= 0x3000;
+}
+
 void
 print_regs(struct pushregs *regs) {
     cprintf("  edi  0x%08x\n", regs->reg_edi);
@@ -186,6 +213,10 @@ trap_dispatch(struct trapframe *tf) {
          * (2) Every TICK_NUM cycle, you can print some info using a funciton, such as print_ticks().
          * (3) Too Simple? Yes, I think so!
          */
+        ticks += 1;
+        if (!(ticks % TICK_NUM)) {
+            print_ticks();
+        }
         break;
     case IRQ_OFFSET + IRQ_COM1:
         c = cons_getc();
@@ -193,12 +224,29 @@ trap_dispatch(struct trapframe *tf) {
         break;
     case IRQ_OFFSET + IRQ_KBD:
         c = cons_getc();
+        if (c == '3' && (tf->tf_cs & 3) != 3) {
+            cprintf("[system] change to user [%03d] %c\n", c, c);
+            lab1_my_to_user(tf);
+            print_trapframe(tf);
+        }
+        else if (c == '0' && (tf->tf_cs & 3) != 0) {
+            cprintf("[system] change to kernel [%03d] %c\n", c, c);
+            lab1_my_to_kernel(tf);
+            print_trapframe(tf);
+        }
         cprintf("kbd [%03d] %c\n", c, c);
         break;
     //LAB1 CHALLENGE 1 : YOUR CODE you should modify below codes.
     case T_SWITCH_TOU:
+        lab1_my_to_user(tf);
+        //cprintf("TOU tf \n");
+        //print_trapframe(tf);
+        break;
     case T_SWITCH_TOK:
-        panic("T_SWITCH_** ??\n");
+        lab1_my_to_kernel(tf);
+        //cprintf("TOK tf \n");
+        //print_trapframe(tf);
+        //panic("T_SWITCH_** ??\n");
         break;
     case IRQ_OFFSET + IRQ_IDE1:
     case IRQ_OFFSET + IRQ_IDE2:
