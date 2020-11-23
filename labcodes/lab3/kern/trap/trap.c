@@ -12,7 +12,7 @@
 #include <kdebug.h>
 
 #define TICK_NUM 100
-
+#define TICK_SWAP_CLK 50
 static void print_ticks() {
     cprintf("%d ticks\n",TICK_NUM);
 #ifdef DEBUG_GRADE
@@ -131,7 +131,7 @@ print_trapframe(struct trapframe *tf) {
     }
 }
 
-/* lab1ÊµÏÖµÄÁ½¸öÇÐ»»º¯Êý */
+/* lab1Êµï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½ */
 static int
 lab1_my_to_kernel(struct trapframe* tf) {
     //cprintf("in kernel \n");
@@ -216,7 +216,12 @@ trap_dispatch(struct trapframe *tf) {
         ticks += 1;
         if (!(ticks % TICK_NUM)) {
             print_ticks();
+            if (in_swap_tick_event) swap_tick_event(check_mm_struct);
         }
+        // if (!(ticks % TICK_SWAP_CLK)){
+        //     in_swap_tick_event = ~in_swap_tick_event;
+        //     if(in_swap_tick_event) 
+        // }
         break;
     case IRQ_OFFSET + IRQ_COM1:
         c = cons_getc();
