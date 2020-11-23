@@ -33,6 +33,7 @@ extern size_t max_swap_offset;
 struct swap_manager
 {
      const char *name;
+     struct mm_struct * test_mm;
      /* Global initialization for the swap manager */
      int (*init)            (void);
      /* Initialize the priv data inside mm_struct */
