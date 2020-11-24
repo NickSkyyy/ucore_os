@@ -30,6 +30,7 @@ _clk_tick_event(struct mm_struct *mm)
         //ptep = page2pa(p);
         //cprintf("before %d\n", *ptep);
         *ptep = *ptep & (~PTE_A);   // accessed bit is set to 0
+        tlb_invalidate(mm->pgdir, p->pra_vaddr);
         //cprintf("after %d\n", *ptep);
         next = list_next(next); //move to next page
     }
@@ -178,6 +179,12 @@ _clk_check_swap(void){
     cprintf("write Virt Page d in fifo_check_swap\n");
     *(unsigned char *)0x4000 = 0x0d;
     assert(pgfault_num==6);
+    // _clk_tick_event(swap_manager_clk.test_mm);
+    // *(unsigned char *)0x3000 = 0xcc;
+    // *(unsigned char *)0x3000 = 0xcc;
+    // *(unsigned char *)0x3000 = 0xcc;
+    // *(unsigned char *)0x3000 = 0xcc;
+    // *(unsigned char *)0x3000 = 0xcc;
     _clk_tick_event(swap_manager_clk.test_mm);
     cprintf("write Virt Page e in fifo_check_swap\n");
     *(unsigned char *)0x5000 = 0x0e;
