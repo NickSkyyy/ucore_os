@@ -21,6 +21,12 @@ static void print_ticks() {
 #endif
 }
 
+int pos;
+uint32_t vpages[2][5] = {
+0x00001000, 0x00002000, 0x00003000, 0x00004000, 0x00005000,
+0x0000000a, 0x0000000b, 0x0000000c, 0x0000000d, 0x0000000e
+};
+
 /* *
  * Interrupt descriptor table:
  *
@@ -209,17 +215,21 @@ trap_dispatch(struct trapframe *tf) {
          * (2) Every TICK_NUM cycle, you can print some info using a funciton, such as print_ticks().
          * (3) Too Simple? Yes, I think so!
          */
-        ticks += 1;
-        if (!(ticks % TICK_NUM))
+        ticks += 1;     
+        if (!(ticks % TICK_NUM)) {
             print_ticks();
-        if (!(ticks % TICK_SWAP_CLK)) {
-            cprintf("numbers of PAGE_FAULT: %d\n", in_swap_tick_event);
-            swap_tick_event(check_mm_struct);
+            //swap_tick_event(check_mm_struct);
         }
-        // if (!(ticks % TICK_SWAP_CLK)){
-        //     in_swap_tick_event = ~in_swap_tick_event;
-        //     if(in_swap_tick_event) 
+        // if (!(ticks % TICK_NUM))
+        // {
+        //     pos = (ticks / 100) % 5;
+        //     print_ticks();
+        //     cprintf("pos is: %d\n", pos);
+        //     cprintf("0x%d write Virt Page %c in ticks\n", vpages[0][pos] & 0xFFFFFFFF, 'a' + vpages[1][pos] - 0xa);
+        //     *(unsigned char*)(vpages[0][pos] & 0xFFFFFFFF) = vpages[1][pos];
         // }
+        // if (!(ticks % TICK_SWAP_CLK)) 
+        //     swap_tick_event(check_mm_struct);
         break;
     case IRQ_OFFSET + IRQ_COM1:
         c = cons_getc();

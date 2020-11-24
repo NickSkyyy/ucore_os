@@ -15,22 +15,20 @@ list_entry_t pra_list_head;
 static int
 _clk_tick_event(struct mm_struct *mm)
 {
-
     pte_t* ptep = NULL;
     list_entry_t *start, *next;
     start = (list_entry_t* )mm->sm_priv;
     next = list_next(start);
+    cprintf("after positive swap\n");
     while(next != start){
         struct Page* p = le2page(next, pra_page_link);
-        
-        //cprintf("ckpt\n");
         ptep = get_pte(mm->pgdir, p->pra_vaddr, 0);//get_pte(mm->pgdir, page2(p), 0);
         assert((*ptep & PTE_P) != 0);
-        //cprintf("ckpt %p\n", p->pra_vaddr);
-        //ptep = page2pa(p);
-        //cprintf("before %d\n", *ptep);
         *ptep = *ptep & (~PTE_A);   // accessed bit is set to 0
-        //cprintf("after %d\n", *ptep);
+        cprintf("addr is: 0x%llx\n", p->pra_vaddr);
+        cprintf("accessed: %d, dirty: %d\n", 
+        ((*ptep & PTE_A) == 0 ? 0 : 1),
+        ((*ptep & PTE_D) == 0 ? 0 : 1));
         next = list_next(next); //move to next page
     }
     //CODE HERE
@@ -85,23 +83,24 @@ _clk_swap_out_victim(struct mm_struct* mm, struct Page ** ptr_page, int in_tick)
         bool dirty = (((*ptep) & PTE_D) != 0);   // accessed bit
         cprintf("access %d, dirty %d \n", accessed, dirty);
         cprintf("%p, %d\n", p, p->flags);
-        if (!accessed && !dirty)
+        if (!accessed && !dirty /*&& page_l1 == NULL*/)
         {
             page_l1 = le2page(next, pra_page_link);
             le1 = next;
             break;
         }
-        else if (!accessed && dirty)
+        else if (!accessed && dirty)//(&& page_l2 == NULL)
         {
             page_l2 = le2page(next, pra_page_link);
             le2 = next;
         }
-        else if (accessed && !dirty)
-        {
+        else if (accessed && !dirty )//(&& page_l3 == NULL)
+        {              
             page_l3 = le2page(next, pra_page_link);
             le3 = next;
         }
-        else{
+        else if (accessed && dirty )//(&& page_l4 == NULL)
+        {                
             page_l4 = le2page(next, pra_page_link);
             le4 = next;
         }
@@ -137,6 +136,15 @@ _clk_swap_out_victim(struct mm_struct* mm, struct Page ** ptr_page, int in_tick)
         //cprintf("%p\n",page_l4->pra_vaddr);
         *ptr_page = page_l4;
         list_del(&(page_l4->pra_page_link));
+        // // deal with all dirty
+        // start = (list_entry_t* )(mm->sm_priv);
+        // next = list_next(start);
+        // while (next != start) {
+        //     struct Page* p = le2page(next, pra_page_link);
+        //     ptep = get_pte(mm->pgdir, p->pra_vaddr, 0);
+        //     *ptep = *ptep & (~PTE_A);
+        //     next = list_next(next);
+        // }
         return 0;
     }else{
         cprintf("something wrong when victim\n");
@@ -148,6 +156,7 @@ _clk_swap_out_victim(struct mm_struct* mm, struct Page ** ptr_page, int in_tick)
 
 static int
 _clk_check_swap(void){
+    extern struct mm_struct *check_mm_struct;
     cprintf("write Virt Page c in clk_check_swap\n");
     *(unsigned char *)0x3000 = 0x0c;
     assert(pgfault_num==4);
@@ -163,29 +172,32 @@ _clk_check_swap(void){
     cprintf("write Virt Page e in clk_check_swap\n");
     *(unsigned char *)0x5000 = 0x0e;
     assert(pgfault_num==5);
+    _clk_tick_event(check_mm_struct);
+
+    // b c d e(first: b, Acc/D: 0 1)
     cprintf("write Virt Page b in fifo_check_swap\n");
     *(unsigned char *)0x2000 = 0x0b;
     assert(pgfault_num==5);
     cprintf("write Virt Page a in fifo_check_swap\n");
     *(unsigned char *)0x1000 = 0x0a;
-    assert(pgfault_num==5);
+    assert(pgfault_num==6);
     cprintf("write Virt Page b in fifo_check_swap\n");
     *(unsigned char *)0x2000 = 0x0b;
-    assert(pgfault_num==5);
+    assert(pgfault_num==6);
     cprintf("write Virt Page c in fifo_check_swap\n");
     *(unsigned char *)0x3000 = 0x0c;
-    assert(pgfault_num==5);
+    assert(pgfault_num==7);
+    _clk_tick_event(check_mm_struct);
     cprintf("write Virt Page d in fifo_check_swap\n");
     *(unsigned char *)0x4000 = 0x0d;
-    assert(pgfault_num==6);
-    _clk_tick_event(swap_manager_clk.test_mm);
+    assert(pgfault_num==8);
     cprintf("write Virt Page e in fifo_check_swap\n");
     *(unsigned char *)0x5000 = 0x0e;
-    assert(pgfault_num==7);
+    assert(pgfault_num==8);
     cprintf("write Virt Page a in fifo_check_swap\n");
     assert(*(unsigned char *)0x1000 == 0x0a);
     *(unsigned char *)0x1000 = 0x0a;
-    assert(pgfault_num==7);
+    assert(pgfault_num==8);
     return 0;
 }
 
