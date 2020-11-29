@@ -83,6 +83,18 @@ swap_set_unswappable(struct mm_struct *mm, uintptr_t addr)
 volatile unsigned int swap_out_num=0;
 
 int
+check_victim(struct mm_struct* mm, struct Page* page) {
+    list_entry_t* start = (list_entry_t* )(mm->sm_priv);
+    list_entry_t* next = list_next(start);
+    while (next != start) {
+         struct Page* p = le2page(next, pra_page_link);
+         if (p == page) return 1;
+         next = list_next(next);
+    }
+    return 0;
+}
+
+int
 swap_out(struct mm_struct *mm, int n, int in_tick)
 {
      int i;

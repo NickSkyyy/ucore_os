@@ -163,18 +163,24 @@ struct Page *
 alloc_pages(size_t n) {
     struct Page *page=NULL;
     bool intr_flag;
-    
     while (1)
     {
          local_intr_save(intr_flag);
          {
+              cprintf("this time we have %d free pages\n", pmm_manager->nr_free_pages());
               page = pmm_manager->alloc_pages(n);
          }
          local_intr_restore(intr_flag);
 
+        // // qxr: change begin
+        // extern struct mm_struct *check_mm_struct;
+        // if (n == 1 && !check_victim(check_mm_struct, page)) {
+        //     pmm_manager->free_pages(page, n);
+        //     page = NULL;
+        // }
+        // // qxr: change end 
          if (page != NULL || n > 1 || swap_init_ok == 0) break;
-         
-         extern struct mm_struct *check_mm_struct;
+          
          //cprintf("page %x, call swap_out in alloc_pages %d\n",page, n);
          swap_out(check_mm_struct, n, 0);
     }
@@ -384,7 +390,7 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
         *pdep = pa | PTE_P | PTE_W | PTE_U; // (7) set page directory entry's permission
 }
     return (pte_t*)KADDR((PDE_ADDR(*pdep))) + PTX(la); //SYD: maybe more easily to understand
-    //return &((pte_t *)KADDR(PDE_ADDR(*pdep)))[PTX(la)];   //DJL:  pdep is actually la£¬ should return va
+    //return &((pte_t *)KADDR(PDE_ADDR(*pdep)))[PTX(la)];   //DJL:  pdep is actually laï¿½ï¿½ should return va
                     // (8) return page table entry
 }
 

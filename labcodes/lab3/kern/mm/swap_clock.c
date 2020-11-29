@@ -29,6 +29,8 @@ _clk_tick_event(struct mm_struct *mm)
         cprintf("accessed: %d, dirty: %d\n", 
         ((*ptep & PTE_A) == 0 ? 0 : 1),
         ((*ptep & PTE_D) == 0 ? 0 : 1));
+        tlb_invalidate(mm->pgdir, p->pra_vaddr);
+        //cprintf("after %d\n", *ptep);
         next = list_next(next); //move to next page
     }
     //CODE HERE
@@ -83,23 +85,23 @@ _clk_swap_out_victim(struct mm_struct* mm, struct Page ** ptr_page, int in_tick)
         bool dirty = (((*ptep) & PTE_D) != 0);   // accessed bit
         cprintf("access %d, dirty %d \n", accessed, dirty);
         cprintf("%p, %d\n", p, p->flags);
-        if (!accessed && !dirty /*&& page_l1 == NULL*/)
+        if (!accessed && !dirty && page_l1 == NULL)
         {
             page_l1 = le2page(next, pra_page_link);
             le1 = next;
             break;
         }
-        else if (!accessed && dirty)//(&& page_l2 == NULL)
+        else if (!accessed && dirty && page_l2 == NULL)
         {
             page_l2 = le2page(next, pra_page_link);
             le2 = next;
         }
-        else if (accessed && !dirty )//(&& page_l3 == NULL)
+        else if (accessed && !dirty && page_l3 == NULL)
         {              
             page_l3 = le2page(next, pra_page_link);
             le3 = next;
         }
-        else if (accessed && dirty )//(&& page_l4 == NULL)
+        else if (accessed && dirty && page_l4 == NULL)
         {                
             page_l4 = le2page(next, pra_page_link);
             le4 = next;

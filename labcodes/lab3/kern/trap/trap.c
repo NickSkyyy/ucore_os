@@ -216,20 +216,20 @@ trap_dispatch(struct trapframe *tf) {
          * (3) Too Simple? Yes, I think so!
          */
         ticks += 1;     
-        if (!(ticks % TICK_NUM)) {
-            print_ticks();
-            //swap_tick_event(check_mm_struct);
-        }
-        // if (!(ticks % TICK_NUM))
-        // {
-        //     pos = (ticks / 100) % 5;
+        // if (!(ticks % TICK_NUM)) {
         //     print_ticks();
-        //     cprintf("pos is: %d\n", pos);
-        //     cprintf("0x%d write Virt Page %c in ticks\n", vpages[0][pos] & 0xFFFFFFFF, 'a' + vpages[1][pos] - 0xa);
-        //     *(unsigned char*)(vpages[0][pos] & 0xFFFFFFFF) = vpages[1][pos];
+        //     //swap_tick_event(check_mm_struct);
         // }
-        // if (!(ticks % TICK_SWAP_CLK)) 
-        //     swap_tick_event(check_mm_struct);
+        if (!(ticks % TICK_NUM))
+        {
+            pos = (ticks / 100) % 5;
+            print_ticks();
+            cprintf("pos is: %d\n", pos);
+            cprintf("0x%d write Virt Page %c in ticks\n", vpages[0][pos] & 0xFFFFFFFF, 'a' + vpages[1][pos] - 0xa);
+            *(unsigned char*)(vpages[0][pos] & 0xFFFFFFFF) = vpages[1][pos];
+        }
+        if (!(ticks % TICK_SWAP_CLK)) 
+            swap_tick_event(check_mm_struct);
         break;
     case IRQ_OFFSET + IRQ_COM1:
         c = cons_getc();
