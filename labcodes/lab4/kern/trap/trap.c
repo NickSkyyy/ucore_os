@@ -12,7 +12,7 @@
 #include <kdebug.h>
 
 #define TICK_NUM 100
-
+#define TICK_SWAP_CLK 50
 static void print_ticks() {
     cprintf("%d ticks\n",TICK_NUM);
 #ifdef DEBUG_GRADE
@@ -20,6 +20,12 @@ static void print_ticks() {
     panic("EOT: kernel seems ok.");
 #endif
 }
+
+int pos;
+uint32_t vpages[2][5] = {
+0x00001000, 0x00002000, 0x00003000, 0x00004000, 0x00005000,
+0x0000000a, 0x0000000b, 0x0000000c, 0x0000000d, 0x0000000e
+};
 
 /* *
  * Interrupt descriptor table:
@@ -48,6 +54,13 @@ idt_init(void) {
       *     You don't know the meaning of this instruction? just google it! and check the libs/x86.h to know more.
       *     Notice: the argument of lidt is idt_pd. try to find it!
       */
+    extern uintptr_t __vectors[];
+    for (int i = 0; i < 256; i++) {
+        SETGATE(idt[i], 0, KERNEL_CS, __vectors[i], DPL_KERNEL);
+    }
+    SETGATE(idt[T_SWITCH_TOK], 1, KERNEL_CS, __vectors[T_SWITCH_TOK], DPL_USER);
+    SETGATE(idt[T_SWITCH_TOU], 1, KERNEL_CS, __vectors[T_SWITCH_TOU], DPL_KERNEL);
+    lidt(&idt_pd);
 }
 
 static const char *
@@ -124,6 +137,26 @@ print_trapframe(struct trapframe *tf) {
     }
 }
 
+/* lab1ʵ�ֵ������л����� */
+static int
+lab1_my_to_kernel(struct trapframe* tf) {
+    //cprintf("in kernel \n");
+    tf->tf_cs = KERNEL_CS;
+    tf->tf_ds = KERNEL_DS;
+    tf->tf_es = KERNEL_DS;
+    tf->tf_ss = KERNEL_DS;
+    tf->tf_eflags &= 0x0fff;
+}
+static int
+lab1_my_to_user(struct trapframe* tf) {
+    //cprintf("in user \n");
+    tf->tf_cs = USER_CS;
+    tf->tf_ds = USER_DS;
+    tf->tf_es = USER_DS;
+    tf->tf_ss = USER_DS;
+    tf->tf_eflags |= 0x3000;
+}
+
 void
 print_regs(struct pushregs *regs) {
     cprintf("  edi  0x%08x\n", regs->reg_edi);
@@ -186,6 +219,21 @@ trap_dispatch(struct trapframe *tf) {
          * (2) Every TICK_NUM cycle, you can print some info using a funciton, such as print_ticks().
          * (3) Too Simple? Yes, I think so!
          */
+        ticks += 1;     
+        // if (!(ticks % TICK_NUM)) {
+        //     print_ticks();
+        //     //swap_tick_event(check_mm_struct);
+        // }
+        if (!(ticks % TICK_NUM))
+        {
+            pos = (ticks / 100) % 5;
+            print_ticks();
+            cprintf("pos is: %d\n", pos);
+            cprintf("0x%d write Virt Page %c in ticks\n", vpages[0][pos] & 0xFFFFFFFF, 'a' + vpages[1][pos] - 0xa);
+            *(unsigned char*)(vpages[0][pos] & 0xFFFFFFFF) = vpages[1][pos];
+        }
+        if (!(ticks % TICK_SWAP_CLK)) 
+            swap_tick_event(check_mm_struct);
         break;
     case IRQ_OFFSET + IRQ_COM1:
         c = cons_getc();
@@ -197,8 +245,15 @@ trap_dispatch(struct trapframe *tf) {
         break;
     //LAB1 CHALLENGE 1 : YOUR CODE you should modify below codes.
     case T_SWITCH_TOU:
+        lab1_my_to_user(tf);
+        //cprintf("TOU tf \n");
+        //print_trapframe(tf);
+        break;
     case T_SWITCH_TOK:
-        panic("T_SWITCH_** ??\n");
+        lab1_my_to_kernel(tf);
+        //cprintf("TOK tf \n");
+        //print_trapframe(tf);
+        //panic("T_SWITCH_** ??\n");
         break;
     case IRQ_OFFSET + IRQ_IDE1:
     case IRQ_OFFSET + IRQ_IDE2:
