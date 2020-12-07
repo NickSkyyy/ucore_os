@@ -408,4 +408,3 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
 failed:
     return ret;
 }
-

@@ -388,7 +388,7 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
         //DJL maybe is related to exe3's challenge
         memset(KADDR(pa), 0, sizeof(struct Page)); // (6) clear page content using memset
         *pdep = pa | PTE_P | PTE_W | PTE_U; // (7) set page directory entry's permission
-}
+    }
     return (pte_t*)KADDR((PDE_ADDR(*pdep))) + PTX(la); //SYD: maybe more easily to understand
     //return &((pte_t *)KADDR(PDE_ADDR(*pdep)))[PTX(la)];   //DJL:  pdep is actually la�� should return va
                     // (8) return page table entry
@@ -436,7 +436,7 @@ page_remove_pte(pde_t *pgdir, uintptr_t la, pte_t *ptep) {
         if (page_ref(page) == 0)                //(4) and free this page when page reference reachs 0
         {
             free_page(page);
-}
+    }
         *ptep = 0;                              //(5) clear second page table entry
         tlb_invalidate(pgdir, la);               //(6) flush tlb
     }

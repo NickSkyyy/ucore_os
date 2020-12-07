@@ -161,7 +161,7 @@ alloc_pages(size_t n) {
     {
          local_intr_save(intr_flag);
          {
-              cprintf("this time we have %d free pages\n", pmm_manager->nr_free_pages());
+              //cprintf("this time we have %d free pages\n", pmm_manager->nr_free_pages());
               page = pmm_manager->alloc_pages(n);
          }
          local_intr_restore(intr_flag);

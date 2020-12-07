@@ -9,7 +9,7 @@
 
 /*
  * SLOB Allocator: Simple List Of Blocks
- *
+ *  
  * Matt Mackall <mpm@selenic.com> 12/30/03
  *
  * How SLOB works:
