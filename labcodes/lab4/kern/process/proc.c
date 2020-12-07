@@ -102,18 +102,20 @@ alloc_proc(void) {
      *       uint32_t flags;                             // Process flag
      *       char name[PROC_NAME_LEN + 1];               // Process name
      */
-        proc->state        = PROC_UNINIT;
-        proc->pid          = -1;
-        proc->runs         = 0;
-        proc->kstack       = 0;
+        proc->state = PROC_UNINIT;
+        proc->pid = -1;
+        proc->runs = 0;
+        // these three params can check out guidebook P221
+        proc->mm = NULL; // cuz lab4 processes are all in kernel
+        proc->cr3 = boot_cr3;
+        // these two params can check out guidebook P221
+        proc->kstack = 0;
         proc->need_resched = 0;
-        proc->parent       = NULL;
-        proc->mm           = NULL;
-        memset(&(proc->context), 0, sizeof(struct context));
-        proc->tf           = NULL;
-        proc->cr3          = boot_cr3;
-        proc->flags        = 0;
-        memset(proc->name, 0, sizeof(PROC_NAME_LEN));
+        proc->parent = NULL;
+        memset(&(proc->context), 0, sizeof(proc->context));
+        proc->tf = NULL;
+        proc->flags = 0;
+        memset(proc->name, 0, PROC_NAME_LEN);
     }
     return proc;
 }
