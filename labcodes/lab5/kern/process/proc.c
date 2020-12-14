@@ -103,6 +103,20 @@ alloc_proc(void) {
      *       uint32_t flags;                             // Process flag
      *       char name[PROC_NAME_LEN + 1];               // Process name
      */
+        proc->state = PROC_UNINIT;
+        proc->pid = -1;
+        proc->runs = 0;
+        // these three params can check out guidebook P221
+        proc->mm = NULL; // cuz lab4 processes are all in kernel
+        proc->cr3 = boot_cr3;
+        // these two params can check out guidebook P221
+        proc->kstack = 0;
+        proc->need_resched = 0;
+        proc->parent = NULL;
+        memset(&(proc->context), 0, sizeof(proc->context));
+        proc->tf = NULL;
+        proc->flags = 0;
+        memset(proc->name, 0, PROC_NAME_LEN);
      //LAB5 YOUR CODE : (update LAB4 steps)
     /*
      * below fields(add in LAB5) in proc_struct need to be initialized	
@@ -389,13 +403,26 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
      */
 
     //    1. call alloc_proc to allocate a proc_struct
+    proc = alloc_proc();
+    if (proc == NULL) goto fork_out;
+    proc->parent = current;
     //    2. call setup_kstack to allocate a kernel stack for child process
+    if (setup_kstack(proc) != 0)
+        goto bad_fork_cleanup_kstack;
     //    3. call copy_mm to dup OR share mm according clone_flag
+    copy_mm(clone_flags, proc);
     //    4. call copy_thread to setup tf & context in proc_struct
+    copy_thread(proc, stack, tf);
     //    5. insert proc_struct into hash_list && proc_list
+    proc->pid = get_pid();
+    hash_proc(proc);
+    list_add_after(&proc_list, &(proc->list_link));
+    nr_process++;
     //    6. call wakeup_proc to make the new child process RUNNABLE
+    proc->state = PROC_RUNNABLE;
     //    7. set ret vaule using child proc's pid
-
+    ret = proc->pid;
+    
 	//LAB5 YOUR CODE : (update LAB4 steps)
    /* Some Functions
     *    set_links:  set the relation links of process.  ALSO SEE: remove_links:  lean the relation links of process 
