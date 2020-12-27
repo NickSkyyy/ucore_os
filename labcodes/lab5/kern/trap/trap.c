@@ -66,8 +66,9 @@ idt_init(void) {
     for (int i = 0; i < 256; i++) {
         SETGATE(idt[i], 0, KERNEL_CS, __vectors[i], DPL_KERNEL);
     }
-    SETGATE(idt[T_SWITCH_TOK], 1, KERNEL_CS, __vectors[T_SWITCH_TOK], DPL_USER);
-    SETGATE(idt[T_SWITCH_TOU], 1, KERNEL_CS, __vectors[T_SWITCH_TOU], DPL_KERNEL);
+    // SETGATE(idt[T_SWITCH_TOK], 1, KERNEL_CS, __vectors[T_SWITCH_TOK], DPL_USER);
+    // SETGATE(idt[T_SWITCH_TOU], 1, KERNEL_CS, __vectors[T_SWITCH_TOU], DPL_KERNEL);
+    SETGATE(idt[T_SYSCALL], 1, KERNEL_CS, __vectors[T_SYSCALL], DPL_USER);
     lidt(&idt_pd);
 }
 
@@ -256,21 +257,23 @@ trap_dispatch(struct trapframe *tf) {
         /* you should upate you lab1 code (just add ONE or TWO lines of code):
          *    Every TICK_NUM cycle, you should set current process's current->need_resched = 1
          */
-    ticks += 1;     
-        // if (!(ticks % TICK_NUM)) {
-        //     print_ticks();
-        //     //swap_tick_event(check_mm_struct);
-        // }
-        if (!(ticks % TICK_NUM))
-        {
-            pos = (ticks / 100) % 5;
-            print_ticks();
-            cprintf("pos is: %d\n", pos);
-            cprintf("0x%d write Virt Page %c in ticks\n", vpages[0][pos] & 0xFFFFFFFF, 'a' + vpages[1][pos] - 0xa);
-            *(unsigned char*)(vpages[0][pos] & 0xFFFFFFFF) = vpages[1][pos];
+        ticks += 1;     
+        if (!(ticks % TICK_NUM)) {
+            //print_ticks();
+            assert(current != NULL);
+            current->need_resched = 1;
+            //swap_tick_event(check_mm_struct);
         }
-        if (!(ticks % TICK_SWAP_CLK)) 
-            swap_tick_event(check_mm_struct);
+        // if (!(ticks % TICK_NUM))
+        // {
+        //     pos = (ticks / 100) % 5;
+        //     print_ticks();
+        //     cprintf("pos is: %d\n", pos);
+        //     cprintf("0x%d write Virt Page %c in ticks\n", vpages[0][pos] & 0xFFFFFFFF, 'a' + vpages[1][pos] - 0xa);
+        //     *(unsigned char*)(vpages[0][pos] & 0xFFFFFFFF) = vpages[1][pos];
+        // }
+        // if (!(ticks % TICK_SWAP_CLK)) 
+        //     swap_tick_event(check_mm_struct);
         break;
     case IRQ_OFFSET + IRQ_COM1:
         c = cons_getc();

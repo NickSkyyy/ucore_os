@@ -368,6 +368,7 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
         struct Page* page;
         if (create == 1) {                       // (3) check if creating is needed, then alloc page for page table
             page = alloc_pages(1);
+            if (page == NULL) return page;
         }
         else return NULL;
         // CAUTION: this page is used for page table, not for common data page
@@ -375,7 +376,7 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
         uintptr_t pa = page2pa(page);       // (5) get linear address of page
         //DJL KADDR is rebased with KERNBASE,locates from 0xC0000000
         //DJL maybe is related to exe3's challenge
-        memset(KADDR(pa), 0, sizeof(struct Page)); // (6) clear page content using memset
+        memset(KADDR(pa), 0, PGSIZE); // (6) clear page content using memset
         *pdep = pa | PTE_P | PTE_W | PTE_U; // (7) set page directory entry's permission
     }
     return (pte_t*)KADDR((PDE_ADDR(*pdep))) + PTX(la); //SYD: maybe more easily to understand
@@ -421,7 +422,7 @@ page_remove_pte(pde_t *pgdir, uintptr_t la, pte_t *ptep) {
     {
         struct Page* page = pte2page(*ptep);    //(2) find corresponding page to pte
         page_ref_dec(page);                     //(3) decrease page reference
-        cprintf("%d\n", page_ref(page));
+        // cprintf("%d\n", page_ref(page));
         if (page_ref(page) == 0)                //(4) and free this page when page reference reachs 0
         {
             free_page(page);
@@ -510,6 +511,14 @@ copy_range(pde_t *to, pde_t *from, uintptr_t start, uintptr_t end, bool share) {
          * (3) memory copy from src_kvaddr to dst_kvaddr, size is PGSIZE
          * (4) build the map of phy addr of  nage with the linear addr start
          */
+        // 1
+        void* src_kvaddr = page2kva(page);
+        // 2
+        void* dst_kvaddr = page2kva(npage);
+        // 3
+        memcpy(dst_kvaddr, src_kvaddr, PGSIZE);
+        // 4
+        page_insert(to, npage, start, perm);
         assert(ret == 0);
         }
         start += PGSIZE;

@@ -485,7 +485,7 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
         if(swap_init_ok) {
             struct Page *page=NULL;
             //(1）According to the mm AND addr, try to load the content of right disk page into the memory which page managed.
-            if (swap_in(mm, addr, &page) != 0) {
+            if ((ret = swap_in(mm, addr, &page)) != 0) {
                 cprintf("swap in error in do_pgfault!\n");
                 goto failed;
             }

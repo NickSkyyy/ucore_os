@@ -137,23 +137,19 @@ default_alloc_pages(size_t n) {
     // 4.1.2
     if (page != NULL) {
         // 4.1.2.1
-        SetPageReserved(page);
         if (page->property > n) {
             struct Page* p = page + n;
             p->property = page->property - n;
             SetPageProperty(p);
             list_add(&(page->page_link), &(p->page_link));
         }
-        /* DJL upper code written to deal with left over spaces*/
-        /*DJL set PG_reserved to 1����*/
-        //SetPageReserved(page);//SYD: Has to delete this line or will crash
-        ClearPageReserved(page);//DJL: WORK BUT NOT SURE
-        // 4.1.2 (PG_property to 0)
-        ClearPageProperty(page);
         // 4.1.2 (page unlink)
         list_del(&(page->page_link));
         // 4.1.3
         nr_free -= n;
+        //ClearPageReserved(page);//DJL: WORK BUT NOT SURE
+        // 4.1.2 (PG_property to 0)
+        ClearPageProperty(page);
     }
     return page;
 }
@@ -163,6 +159,7 @@ default_free_pages(struct Page *base, size_t n) {
     assert(n > 0);
     struct Page *p = base;
     for (; p != base + n; p ++) {
+        //cprintf("%d %d\n", PageReserved(p), PageProperty(p));
         assert(!PageReserved(p) && !PageProperty(p));
         p->flags = 0;
         set_page_ref(p, 0);
@@ -194,7 +191,7 @@ default_free_pages(struct Page *base, size_t n) {
     list_entry_t* bfle = list_prev(le);
     while (le != &free_list) {
         p = le2page(le, page_link);
-        if (base + base->property < le) {
+        if (base + base->property <= p) {
             break;
         }
         bfle = bfle->next;
